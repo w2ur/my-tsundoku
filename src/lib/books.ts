@@ -8,6 +8,7 @@ export async function addBook(
     notes?: string;
     storeUrl?: string;
     isbn?: string;
+    olWorkId?: string;
   }
 ): Promise<Book> {
   const stage = data.stage ?? "a_acheter";
@@ -32,6 +33,7 @@ export async function addBook(
     ...(data.notes && { notes: data.notes }),
     ...(data.storeUrl && { storeUrl: data.storeUrl }),
     ...(data.isbn && { isbn: data.isbn }),
+    ...(data.olWorkId && { olWorkId: data.olWorkId }),
   };
   await db.books.add(book);
   return book;
@@ -43,7 +45,7 @@ export async function getBook(id: string): Promise<Book | undefined> {
 
 export async function updateBook(
   id: string,
-  data: Partial<Pick<Book, "title" | "author" | "coverUrl" | "stage" | "notes" | "storeUrl" | "isbn" | "isReading">>
+  data: Partial<Pick<Book, "title" | "author" | "coverUrl" | "stage" | "notes" | "storeUrl" | "isbn" | "isReading" | "olWorkId">>
 ): Promise<void> {
   await db.books.update(id, { ...data, updatedAt: Date.now() });
 }

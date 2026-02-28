@@ -1,9 +1,18 @@
 import Dexie, { type EntityTable } from "dexie";
 import type { Book } from "./types";
 
+export interface SyncQueueEntry {
+  id?: number;
+  bookId: string;
+  operation: "upsert" | "delete";
+  payload: Partial<Book>;
+  createdAt: number;
+}
+
 class TsundokuDB extends Dexie {
   books!: EntityTable<Book, "id">;
   settings!: EntityTable<{ key: string; value: unknown }, "key">;
+  sync_queue!: EntityTable<SyncQueueEntry, "id">;
 
   constructor() {
     super("tsundoku");
@@ -37,6 +46,11 @@ class TsundokuDB extends Dexie {
     this.version(5).stores({
       books: "id, stage, title, author, createdAt, updatedAt, position",
       settings: "key",
+    });
+    this.version(6).stores({
+      books: "id, stage, title, author, createdAt, updatedAt, position",
+      settings: "key",
+      sync_queue: "++id, bookId, operation, createdAt",
     });
   }
 }

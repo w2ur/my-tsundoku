@@ -13,4 +13,6 @@ export interface Book {
   notes?: string;
   storeUrl?: string;
   isbn?: string;
+  olWorkId?: string;
+  deletedAt?: number;
 }
