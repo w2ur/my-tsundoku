@@ -35,6 +35,7 @@ Thumbs.db
 *.bak
 *.dump
 *.sql
+!supabase/migrations/*.sql
 
 # plan files
 docs/plans/
