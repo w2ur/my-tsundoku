@@ -122,12 +122,22 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 )}
               </div>
 
-              <button
-                onClick={() => setEditing(true)}
-                className="text-xs text-forest/40 underline hover:text-forest/60 transition-colors"
-              >
-                {t("book_edit")}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setEditing(true)}
+                  className="text-xs text-forest/40 underline hover:text-forest/60 transition-colors"
+                >
+                  {t("book_edit")}
+                </button>
+                {book.coverUrl && (
+                  <button
+                    onClick={() => updateBook(book.id, { coverUrl: "" })}
+                    className="text-xs text-forest/40 underline hover:text-forest/60 transition-colors"
+                  >
+                    {t("cover_useGenerated")}
+                  </button>
+                )}
+              </div>
             </>
           )}
 

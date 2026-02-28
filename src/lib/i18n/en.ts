@@ -148,6 +148,7 @@ const en: Record<TranslationKeys, string> = {
   cover_cropTitle: "Crop cover",
   cover_cropConfirm: "Confirm",
   cover_cropCancel: "Cancel",
+  cover_useGenerated: "Use generated cover",
 };
 
 export default en;

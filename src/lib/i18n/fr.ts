@@ -148,6 +148,7 @@ const fr = {
   cover_cropTitle: "Recadrer la couverture",
   cover_cropConfirm: "Valider",
   cover_cropCancel: "Annuler",
+  cover_useGenerated: "Utiliser une couverture générée",
 } as const;
 
 export default fr;
