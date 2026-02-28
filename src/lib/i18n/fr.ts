@@ -151,6 +151,11 @@ const fr = {
   cover_useGenerated: "Utiliser une couverture générée",
   community_label: "Tsundoku Library",
   community_disclaimer: "Ajouté par la communauté — peut contenir des erreurs",
+  contribute_toggle: "Contribuer au catalogue communautaire",
+  contribute_description: "Les livres ajoutés manuellement seront partagés anonymement pour aider les autres utilisateurs.",
+  account_deleteConfirm: "Êtes-vous sûr ? Cette action est irréversible.",
+  account_deleting: "Suppression...",
+  settings_cloudBackupNote: "Vos livres sont automatiquement sauvegardés dans le cloud.",
 } as const;
 
 export default fr;

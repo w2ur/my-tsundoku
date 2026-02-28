@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import ExportButton from "@/components/ExportButton";
@@ -12,6 +12,9 @@ import { changelog } from "@/lib/changelog";
 import { useTranslation, useTheme } from "@/lib/preferences";
 import { plural } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+import { getSyncStatus, onSyncStatusChange, type SyncStatus } from "@/lib/sync";
+import { deleteAccount } from "@/lib/account";
 
 export default function SettingsPage() {
   const booksByStage = useBooksByStage();
@@ -40,6 +43,61 @@ export default function SettingsPage() {
     () => new Set()
   );
 
+  // Task 20: Contribution toggle
+  const [contributeToCatalog, setContributeToCatalog] = useState(true);
+
+  useEffect(() => {
+    if (!isSignedIn || !supabase || !user) return;
+    supabase
+      .from("profiles")
+      .select("contribute_to_catalog")
+      .eq("id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data && typeof data.contribute_to_catalog === "boolean") {
+          setContributeToCatalog(data.contribute_to_catalog);
+        }
+      });
+  }, [isSignedIn, user]);
+
+  async function handleContributeToggle(value: boolean) {
+    if (!supabase || !user) return;
+    setContributeToCatalog(value);
+    await supabase
+      .from("profiles")
+      .update({ contribute_to_catalog: value })
+      .eq("id", user.id);
+  }
+
+  // Task 21: Delete account
+  const [deleteState, setDeleteState] = useState<"idle" | "confirming" | "deleting">("idle");
+
+  async function handleDeleteAccount() {
+    setDeleteState("deleting");
+    await deleteAccount();
+    // deleteAccount signs out automatically, auth state update will handle UI
+  }
+
+  // Task 22: Sync status
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => getSyncStatus());
+
+  useEffect(() => {
+    const unsubscribe = onSyncStatusChange((status) => {
+      setSyncStatus(status);
+    });
+    return unsubscribe;
+  }, []);
+
+  function renderSyncStatus() {
+    if (syncStatus === "syncing") {
+      return <span className="text-xs text-forest/50">{t("sync_syncing")}</span>;
+    }
+    if (syncStatus === "unsynced") {
+      return <span className="text-xs text-amber">{t("sync_pending").replace("{count}", "—")}</span>;
+    }
+    return <span className="text-xs text-forest/50">{t("sync_synced")}</span>;
+  }
+
   const toggleVersion = (version: string) => {
     setExpandedVersions((prev) => {
       const next = new Set(prev);
@@ -66,16 +124,49 @@ export default function SettingsPage() {
             <div className="bg-surface border border-forest/8 rounded-xl p-4">
               {isSignedIn ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-forest/70">
-                    {t("account_signedInAs")}{" "}
-                    <span className="font-medium text-ink">{user?.email}</span>
-                  </p>
+                  <div>
+                    <p className="text-sm text-forest/70">
+                      {t("account_signedInAs")}{" "}
+                      <span className="font-medium text-ink">{user?.email}</span>
+                    </p>
+                    <div className="mt-1">{renderSyncStatus()}</div>
+                  </div>
                   <button
                     onClick={() => signOut()}
                     className="text-sm text-forest/60 underline hover:text-forest/80 transition-colors"
                   >
                     {t("account_signOut")}
                   </button>
+                  {deleteState === "idle" && (
+                    <button
+                      onClick={() => setDeleteState("confirming")}
+                      className="block text-sm text-red-400 hover:text-red-500 transition-colors border border-red-200 rounded-lg px-3 py-1.5"
+                    >
+                      {t("account_deleteAccount")}
+                    </button>
+                  )}
+                  {deleteState === "confirming" && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-red-500">{t("account_deleteConfirm")}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleDeleteAccount}
+                          className="text-sm text-white bg-red-500 hover:bg-red-600 transition-colors rounded-lg px-3 py-1.5"
+                        >
+                          {t("account_deleteAccount")}
+                        </button>
+                        <button
+                          onClick={() => setDeleteState("idle")}
+                          className="text-sm text-forest/60 hover:text-forest/80 transition-colors"
+                        >
+                          {t("cancel")}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  {deleteState === "deleting" && (
+                    <p className="text-sm text-forest/50">{t("account_deleting")}</p>
+                  )}
                 </div>
               ) : authState === "sent" ? (
                 <div className="space-y-3">
@@ -163,6 +254,11 @@ export default function SettingsPage() {
           <h2 className="text-sm font-semibold tracking-widest uppercase text-forest/60">
             {t("settings_backup")}
           </h2>
+          {isSignedIn && (
+            <p className="text-xs text-forest">
+              {t("settings_cloudBackupNote")}
+            </p>
+          )}
           <p className="text-xs text-forest/40">
             {t("settings_backupDesc")}
           </p>
@@ -247,6 +343,28 @@ export default function SettingsPage() {
                   </button>
                 </div>
               </div>
+              {isSignedIn && (
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <p className="text-sm text-forest/70">{t("contribute_toggle")}</p>
+                    <p className="text-xs text-forest/40 mt-0.5">{t("contribute_description")}</p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={contributeToCatalog}
+                    onClick={() => handleContributeToggle(!contributeToCatalog)}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${
+                      contributeToCatalog ? "bg-forest" : "bg-forest/20"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                        contributeToCatalog ? "translate-x-5" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </section>

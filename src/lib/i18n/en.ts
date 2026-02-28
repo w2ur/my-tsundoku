@@ -151,6 +151,11 @@ const en: Record<TranslationKeys, string> = {
   cover_useGenerated: "Use generated cover",
   community_label: "Tsundoku Library",
   community_disclaimer: "Community-contributed — may contain errors",
+  contribute_toggle: "Contribute to community catalog",
+  contribute_description: "Manually-added books will be shared anonymously to help other users find them.",
+  account_deleteConfirm: "Are you sure? This action cannot be undone.",
+  account_deleting: "Deleting...",
+  settings_cloudBackupNote: "Your books are automatically backed up to the cloud.",
 };
 
 export default en;
