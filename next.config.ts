@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "covers.openlibrary.org" },
       { protocol: "https", hostname: "**.amazon.com" },
       { protocol: "https", hostname: "**.amazon.fr" },
+      { protocol: "https", hostname: "**.supabase.co" },
     ],
   },
 };
