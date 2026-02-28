@@ -3,6 +3,7 @@ export interface OpenLibraryResult {
   author: string;
   coverUrl: string;
   isbn?: string;
+  olWorkId?: string;
 }
 
 interface OLSearchDoc {
@@ -10,6 +11,7 @@ interface OLSearchDoc {
   author_name?: string[];
   cover_i?: number;
   isbn?: string[];
+  key?: string;
 }
 
 export async function searchBooks(
@@ -19,7 +21,7 @@ export async function searchBooks(
 ): Promise<OpenLibraryResult[]> {
   if (!query || query.length < 2) return [];
   const fullQuery = author ? `${query} ${author}` : query;
-  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(fullQuery)}&limit=${limit}&fields=title,author_name,cover_i,isbn`;
+  const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(fullQuery)}&limit=${limit}&fields=title,author_name,cover_i,isbn,key`;
   const res = await fetch(url);
   if (!res.ok) return [];
   const data = await res.json();
@@ -32,6 +34,7 @@ export async function searchBooks(
         ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
         : "",
       isbn: doc.isbn?.[0],
+      olWorkId: doc.key,
     }));
 }
 
@@ -56,7 +59,7 @@ export async function getBookByISBN(isbn: string): Promise<OpenLibraryResult | n
 
   // Fallback to Search API (broader coverage)
   try {
-    const url = `https://openlibrary.org/search.json?isbn=${isbn}&limit=1&fields=title,author_name,cover_i,isbn`;
+    const url = `https://openlibrary.org/search.json?isbn=${isbn}&limit=1&fields=title,author_name,cover_i,isbn,key`;
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (!res.ok) return null;
     const data = await res.json();
@@ -69,6 +72,7 @@ export async function getBookByISBN(isbn: string): Promise<OpenLibraryResult | n
         ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`
         : "",
       isbn,
+      olWorkId: doc.key,
     };
   } catch {
     return null;
