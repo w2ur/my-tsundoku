@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockAdd, mockGet, mockUpdate, mockDelete, mockClear, mockBulkPut, mockToArray, mockWhereToArray } = vi.hoisted(() => ({
+const { mockAdd, mockGet, mockUpdate, mockDelete, mockClear, mockBulkPut, mockToArray, mockWhereToArray, mockEnqueueUpsert, mockEnqueueDelete } = vi.hoisted(() => ({
   mockAdd: vi.fn(),
   mockGet: vi.fn(),
   mockUpdate: vi.fn(),
@@ -9,6 +9,8 @@ const { mockAdd, mockGet, mockUpdate, mockDelete, mockClear, mockBulkPut, mockTo
   mockBulkPut: vi.fn(),
   mockToArray: vi.fn(),
   mockWhereToArray: vi.fn(),
+  mockEnqueueUpsert: vi.fn(),
+  mockEnqueueDelete: vi.fn(),
 }));
 
 vi.mock("./db", () => ({
@@ -21,9 +23,19 @@ vi.mock("./db", () => ({
       clear: mockClear,
       bulkPut: mockBulkPut,
       toArray: mockToArray,
-      where: () => ({ equals: () => ({ toArray: mockWhereToArray }) }),
+      where: () => ({
+        equals: () => ({ toArray: mockWhereToArray }),
+        anyOf: () => ({ toArray: mockWhereToArray }),
+      }),
     },
   },
+}));
+
+vi.mock("./supabase", () => ({ supabase: null }));
+
+vi.mock("./sync", () => ({
+  enqueueUpsert: mockEnqueueUpsert,
+  enqueueDelete: mockEnqueueDelete,
 }));
 
 vi.mock("uuid", () => ({
@@ -46,6 +58,9 @@ function makeBook(overrides: Partial<Book> & { id: string; stage: Book["stage"];
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockWhereToArray.mockResolvedValue([]);
+  mockEnqueueUpsert.mockResolvedValue(undefined);
+  mockEnqueueDelete.mockResolvedValue(undefined);
 });
 
 describe("addBook", () => {

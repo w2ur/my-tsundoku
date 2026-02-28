@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 import { db } from "./db";
+import { enqueueUpsert, enqueueDelete } from "./sync";
 import type { Book, Stage } from "./types";
 
 export async function addBook(
@@ -36,6 +37,7 @@ export async function addBook(
     ...(data.olWorkId && { olWorkId: data.olWorkId }),
   };
   await db.books.add(book);
+  enqueueUpsert(book);
   return book;
 }
 
@@ -48,10 +50,13 @@ export async function updateBook(
   data: Partial<Pick<Book, "title" | "author" | "coverUrl" | "stage" | "notes" | "storeUrl" | "isbn" | "isReading" | "olWorkId">>
 ): Promise<void> {
   await db.books.update(id, { ...data, updatedAt: Date.now() });
+  const updated = await db.books.get(id);
+  if (updated) enqueueUpsert(updated);
 }
 
 export async function deleteBook(id: string): Promise<void> {
   await db.books.delete(id);
+  enqueueDelete(id);
 }
 
 export async function getAllBooks(): Promise<Book[]> {
@@ -159,6 +164,13 @@ export async function moveBookToPosition(
   }
 
   await Promise.all(updates);
+
+  // Enqueue all books whose position changed in affected stages
+  const stagesToSync = sourceStage !== targetStage ? [sourceStage, targetStage] : [targetStage];
+  const booksToSync = await db.books.where("stage").anyOf(stagesToSync).toArray();
+  for (const b of booksToSync) {
+    enqueueUpsert(b);
+  }
 }
 
 export async function markAsReading(bookId: string): Promise<void> {
@@ -166,8 +178,12 @@ export async function markAsReading(bookId: string): Promise<void> {
   if (!book) return;
   await moveBookToPosition(bookId, book.stage, 0);
   await db.books.update(bookId, { isReading: true, updatedAt: Date.now() });
+  const updated = await db.books.get(bookId);
+  if (updated) enqueueUpsert(updated);
 }
 
 export async function unmarkReading(bookId: string): Promise<void> {
   await db.books.update(bookId, { isReading: false, updatedAt: Date.now() });
+  const updated = await db.books.get(bookId);
+  if (updated) enqueueUpsert(updated);
 }
