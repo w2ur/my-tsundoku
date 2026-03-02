@@ -149,6 +149,7 @@ const en: Record<TranslationKeys, string> = {
   cover_cropConfirm: "Confirm",
   cover_cropCancel: "Cancel",
   cover_useGenerated: "Use generated cover",
+  cover_useOriginal: "Use original cover",
   community_label: "Tsundoku Library",
   community_disclaimer: "Community-contributed — may contain errors",
   contribute_toggle: "Contribute to community catalog",

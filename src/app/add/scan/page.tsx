@@ -77,7 +77,7 @@ export default function ScanPage() {
     lookup(isbn);
   }
 
-  async function handleConfirm(extra: { notes?: string; storeUrl?: string }) {
+  async function handleConfirm(extra: { notes?: string; storeUrl?: string; coverUrl?: string }) {
     if (!bookData) return;
     setSaving(true);
     await addBook({ ...bookData, ...extra, isbn, stage: stage as Stage });

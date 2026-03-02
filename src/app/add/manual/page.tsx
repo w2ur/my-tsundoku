@@ -18,7 +18,7 @@ export default function ManualAddPage() {
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
 
-  async function handleConfirm(extra: { notes?: string; storeUrl?: string }) {
+  async function handleConfirm(extra: { notes?: string; storeUrl?: string; coverUrl?: string }) {
     if (!pending) return;
     setLoading(true);
     await addBook({ ...pending, ...extra, stage: stage as Stage });

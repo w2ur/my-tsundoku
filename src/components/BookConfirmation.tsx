@@ -11,7 +11,7 @@ interface Props {
   coverUrl: string;
   notes?: string;
   storeUrl?: string;
-  onConfirm: (extra: { notes?: string; storeUrl?: string }) => void;
+  onConfirm: (extra: { notes?: string; storeUrl?: string; coverUrl?: string }) => void;
   onCancel: () => void;
   loading?: boolean;
 }
@@ -29,6 +29,7 @@ export default function BookConfirmation({
   const { t } = useTranslation();
   const [notes, setNotes] = useState(initialNotes ?? "");
   const [storeUrl, setStoreUrl] = useState(initialStoreUrl ?? "");
+  const [useGenerated, setUseGenerated] = useState(!coverUrl);
 
   const inputClass =
     "w-full px-3 py-2.5 bg-surface border border-forest/15 rounded-lg text-sm text-ink placeholder:text-forest/30 focus:outline-none focus:ring-2 focus:ring-forest/20 focus:border-forest/30";
@@ -36,7 +37,7 @@ export default function BookConfirmation({
   return (
     <div className="flex flex-col items-center gap-6 py-6">
       <div className="relative w-32 h-48 rounded-xl overflow-hidden shadow-lg bg-cream">
-        {coverUrl ? (
+        {!useGenerated && coverUrl ? (
           <Image
             src={coverUrl}
             alt={title}
@@ -49,6 +50,16 @@ export default function BookConfirmation({
           <GeneratedCover title={title} author={author} width={128} height={192} />
         )}
       </div>
+
+      {coverUrl && (
+        <button
+          type="button"
+          onClick={() => setUseGenerated((v) => !v)}
+          className="text-xs text-forest/40 underline hover:text-forest/60 transition-colors"
+        >
+          {useGenerated ? t("cover_useOriginal") : t("cover_useGenerated")}
+        </button>
+      )}
 
       <div className="text-center">
         <h2 className="font-serif text-xl font-semibold text-ink">{title}</h2>
@@ -94,6 +105,7 @@ export default function BookConfirmation({
             onConfirm({
               ...(notes.trim() && { notes: notes.trim() }),
               ...(storeUrl.trim() && { storeUrl: storeUrl.trim() }),
+              ...(useGenerated && coverUrl ? { coverUrl: "" } : {}),
             })
           }
           disabled={loading}

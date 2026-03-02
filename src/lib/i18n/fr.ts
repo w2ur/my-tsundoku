@@ -149,6 +149,7 @@ const fr = {
   cover_cropConfirm: "Valider",
   cover_cropCancel: "Annuler",
   cover_useGenerated: "Utiliser une couverture générée",
+  cover_useOriginal: "Utiliser la couverture d'origine",
   community_label: "Tsundoku Library",
   community_disclaimer: "Ajouté par la communauté — peut contenir des erreurs",
   contribute_toggle: "Contribuer au catalogue communautaire",
