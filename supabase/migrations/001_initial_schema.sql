@@ -19,7 +19,7 @@ CREATE POLICY "users insert own profile" ON profiles FOR INSERT WITH CHECK (auth
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO profiles (id, email)
+  INSERT INTO public.profiles (id, email)
   VALUES (NEW.id, NEW.email);
   RETURN NEW;
 END;
@@ -96,11 +96,11 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  IF NOT (SELECT contribute_to_catalog FROM profiles WHERE id = NEW.user_id) THEN
+  IF NOT (SELECT contribute_to_catalog FROM public.profiles WHERE id = NEW.user_id) THEN
     RETURN NEW;
   END IF;
 
-  INSERT INTO community_books (title, author, isbn)
+  INSERT INTO public.community_books (title, author, isbn)
   VALUES (NEW.title, NEW.author, NEW.isbn)
   ON CONFLICT DO NOTHING;
 
