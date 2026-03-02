@@ -33,6 +33,7 @@ export default function SettingsPage() {
     if (!email.trim()) return;
     setAuthState("sending");
     const { error } = await signInWithMagicLink(email.trim());
+    if (error) console.error("[auth] magic link error:", error);
     setAuthState(error ? "error" : "sent");
   }
 
