@@ -10,6 +10,7 @@ import {
 } from "motion/react";
 import Link from "next/link";
 import Image from "next/image";
+import GeneratedCover from "@/components/GeneratedCover";
 import { STAGES, STAGE_CONFIG } from "@/lib/constants";
 import { moveBookToPosition } from "@/lib/books";
 import { getSwipeThresholds, shouldConfirm, vibrate } from "@/lib/swipe";
@@ -292,20 +293,7 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
                 unoptimized
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="text-forest/20"
-                >
-                  <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-                </svg>
-              </div>
+              <GeneratedCover title={book.title} author={book.author} width={56} height={80} />
             )}
           </div>
           <div className="flex flex-col justify-center min-w-0">
