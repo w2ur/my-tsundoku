@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import Image from "next/image";
@@ -22,7 +22,16 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [showUnmarkPrompt, setShowUnmarkPrompt] = useState(false);
+  const originalCoverRef = useRef<string | null>(null);
   const { t } = useTranslation();
+
+  // Capture the first non-empty coverUrl we see (before any toggle)
+  if (book && originalCoverRef.current === null && book.coverUrl) {
+    originalCoverRef.current = book.coverUrl;
+  }
+  const savedOriginal = originalCoverRef.current ?? "";
+  // Can toggle if there's a saved original cover (even if current is "")
+  const canToggleCover = Boolean(savedOriginal);
 
   if (book === undefined) {
     return (
@@ -129,12 +138,15 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 >
                   {t("book_edit")}
                 </button>
-                {book.coverUrl && (
+                {canToggleCover && (
                   <button
-                    onClick={() => updateBook(book.id, { coverUrl: "" })}
+                    onClick={() => {
+                      const next = book.coverUrl ? "" : savedOriginal;
+                      updateBook(book.id, { coverUrl: next });
+                    }}
                     className="text-xs text-forest/40 underline hover:text-forest/60 transition-colors"
                   >
-                    {t("cover_useGenerated")}
+                    {book.coverUrl ? t("cover_useGenerated") : t("cover_useOriginal")}
                   </button>
                 )}
               </div>
