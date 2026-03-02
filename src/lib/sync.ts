@@ -146,6 +146,24 @@ export async function flushQueue(): Promise<void> {
   flushing = false;
 }
 
+// ---- Per-Device Sync Cursor ----
+
+function getLocalSyncCursor(userId: string): string | null {
+  try {
+    return localStorage.getItem(`tsundoku_last_synced_${userId}`);
+  } catch {
+    return null;
+  }
+}
+
+function setLocalSyncCursor(userId: string): void {
+  try {
+    localStorage.setItem(`tsundoku_last_synced_${userId}`, new Date().toISOString());
+  } catch {
+    // localStorage unavailable
+  }
+}
+
 // ---- Pull ----
 
 export async function pullRemoteChanges(): Promise<void> {
@@ -157,20 +175,19 @@ export async function pullRemoteChanges(): Promise<void> {
   if (!session) return;
 
   const userId = session.user.id;
+  const localCursor = getLocalSyncCursor(userId);
 
-  const { data: syncMeta } = await supabase
-    .from("sync_metadata")
-    .select("last_synced_at")
-    .eq("user_id", userId)
-    .single();
-
-  const lastSyncedAt = syncMeta?.last_synced_at ?? "1970-01-01T00:00:00.000Z";
-
-  const { data: remoteRows, error } = await supabase
+  // Build query — on first pull (no local cursor), fetch ALL books
+  let query = supabase
     .from("books")
     .select("*")
-    .eq("user_id", userId)
-    .gt("updated_at", lastSyncedAt);
+    .eq("user_id", userId);
+
+  if (localCursor) {
+    query = query.gt("updated_at", localCursor);
+  }
+
+  const { data: remoteRows, error } = await query;
 
   if (error || !remoteRows) return;
 
@@ -187,6 +204,9 @@ export async function pullRemoteChanges(): Promise<void> {
       await db.books.put(remoteBook);
     }
   }
+
+  // Update both local cursor and remote metadata
+  setLocalSyncCursor(userId);
 
   await supabase.from("sync_metadata").upsert({
     user_id: userId,

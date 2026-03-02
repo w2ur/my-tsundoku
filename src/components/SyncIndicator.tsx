@@ -31,32 +31,56 @@ export default function SyncIndicator() {
       onMouseLeave={() => setShowTooltip(false)}
       onClick={() => setShowTooltip((v) => !v)}
     >
-      <div
-        className={`relative p-2 rounded-lg transition-colors ${
-          status === "syncing" ? "animate-pulse" : ""
-        }`}
-        aria-label={label}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-forest/40"
-        >
-          <path d="M2 6h4" />
-          <path d="M2 10h4" />
-          <path d="M2 14h4" />
-          <rect x="4" y="2" width="16" height="20" rx="2" />
-          <path d="M12 2v20" />
-        </svg>
-        {status === "unsynced" && (
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber rounded-full" />
+      <div className="relative p-2 rounded-lg transition-colors" aria-label={label}>
+        {status === "syncing" ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-forest/60 animate-spin"
+            style={{ animationDuration: "1.5s" }}
+          >
+            <path d="M21 12a9 9 0 1 1-6.22-8.56" />
+          </svg>
+        ) : status === "unsynced" ? (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-amber"
+          >
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+            <path d="M12 12v9" />
+            <path d="m16 16-4-4-4 4" />
+          </svg>
+        ) : (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-forest/30"
+          >
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
         )}
       </div>
       {showTooltip && (
