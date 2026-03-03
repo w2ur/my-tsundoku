@@ -1,22 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useTranslation } from "@/lib/preferences";
+import type { Stage } from "@/lib/types";
 
-export default function AddButton() {
+export default function AddButton({ stage }: { stage: Stage }) {
   const { t } = useTranslation();
-  const [stage, setStage] = useState("tsundoku");
-
-  useEffect(() => {
-    const syncStage = () => {
-      const params = new URLSearchParams(window.location.search);
-      setStage(params.get("stage") || "tsundoku");
-    };
-    syncStage();
-    window.addEventListener("popstate", syncStage);
-    return () => window.removeEventListener("popstate", syncStage);
-  }, []);
 
   const href = `/add?stage=${stage}`;
 

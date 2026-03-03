@@ -458,7 +458,7 @@ export default function KanbanBoard({
             </SortableContext>
           </div>
 
-          <AddButton />
+          <AddButton stage={activeTab} />
         </div>
         <DragOverlay dropAnimation={null}>
           {activeBook ? (

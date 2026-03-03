@@ -34,6 +34,18 @@ export const changelog: ChangelogEntry[] = [
     },
   },
   {
+    version: "1.8.1",
+    date: "2026-02-25",
+    changes: {
+      fr: [
+        "Correction : le bouton + sur mobile ajoute maintenant dans la pile active, pas toujours dans tsundoku",
+      ],
+      en: [
+        "Fix: the + button on mobile now adds to the active pile, not always to tsundoku",
+      ],
+    },
+  },
+  {
     version: "1.8.0",
     date: "2026-02-24",
     changes: {
