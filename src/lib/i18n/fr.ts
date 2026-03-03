@@ -156,6 +156,7 @@ const fr = {
   contribute_description: "Les livres ajoutés manuellement seront partagés anonymement pour aider les autres utilisateurs.",
   account_deleteConfirm: "Êtes-vous sûr ? Cette action est irréversible.",
   account_deleting: "Suppression...",
+  account_deleteError: "Erreur lors de la suppression. Réessayez.",
   settings_cloudBackupNote: "Vos livres sont automatiquement sauvegardés dans le cloud.",
 } as const;
 

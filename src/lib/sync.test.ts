@@ -1,10 +1,77 @@
-import { describe, it, expect, vi } from "vitest";
-
-vi.mock("./db", () => ({ db: null }));
-vi.mock("./supabase", () => ({ supabase: null }));
-
-import { mapBookToSupabase, mapSupabaseToBook } from "./sync";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Book } from "./types";
+
+// ---- Hoisted mock factories ----
+
+const { mockDb, mockSupabase } = vi.hoisted(() => ({
+  mockDb: {
+    sync_queue: {
+      add: vi.fn().mockResolvedValue(undefined),
+      toArray: vi.fn().mockResolvedValue([]),
+      delete: vi.fn().mockResolvedValue(undefined),
+    },
+    books: {
+      get: vi.fn().mockResolvedValue(undefined),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+    },
+  },
+  mockSupabase: {
+    auth: {
+      getSession: vi.fn().mockResolvedValue({ data: { session: null } }),
+    },
+    from: vi.fn(),
+  },
+}));
+
+vi.mock("./db", () => ({ db: mockDb }));
+vi.mock("./supabase", () => ({ supabase: mockSupabase }));
+
+import {
+  mapBookToSupabase,
+  mapSupabaseToBook,
+  onSyncStatusChange,
+  getSyncStatus,
+  enqueueUpsert,
+  enqueueDelete,
+  flushQueue,
+  pullRemoteChanges,
+  startSyncListeners,
+} from "./sync";
+
+// ---- Helpers ----
+
+/** Creates a chainable, awaitable mock mimicking the Supabase query builder. */
+function mockChain(result: Record<string, unknown> = { data: null, error: null }) {
+  const chain: Record<string, unknown> = {};
+  for (const method of ["select", "eq", "gt", "upsert", "update"]) {
+    (chain as Record<string, unknown>)[method] = vi.fn().mockReturnValue(chain);
+  }
+  chain.then = (
+    resolve: (v: unknown) => void,
+    reject?: (e: unknown) => void,
+  ) => Promise.resolve(result).then(resolve, reject);
+  return chain;
+}
+
+const testBook: Book = {
+  id: "b1",
+  title: "Test",
+  author: "Author",
+  coverUrl: "",
+  stage: "tsundoku",
+  position: 0,
+  createdAt: 1700000000000,
+  updatedAt: 1700001000000,
+};
+
+function mockSession(userId = "u1") {
+  return { data: { session: { user: { id: userId } } } };
+}
+
+// ============================================================
+// Existing: field mapping
+// ============================================================
 
 describe("sync field mapping", () => {
   const localBook: Book = {
@@ -104,5 +171,422 @@ describe("sync field mapping", () => {
     expect(row.store_url).toBeNull();
     expect(row.isbn).toBeNull();
     expect(row.ol_work_id).toBeNull();
+  });
+});
+
+// ============================================================
+// 3a: Sync status listeners
+// ============================================================
+
+describe("sync status", () => {
+  it("initial status is synced", () => {
+    expect(getSyncStatus()).toBe("synced");
+  });
+
+  it("listener receives status changes", async () => {
+    const statuses: string[] = [];
+    const unsub = onSyncStatusChange((s) => statuses.push(s));
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+
+    await flushQueue();
+    unsub();
+
+    expect(statuses).toContain("syncing");
+    expect(statuses).toContain("synced");
+  });
+
+  it("unsubscribe removes listener", async () => {
+    const statuses: string[] = [];
+    const unsub = onSyncStatusChange((s) => statuses.push(s));
+    unsub();
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+
+    await flushQueue();
+
+    expect(statuses).toHaveLength(0);
+  });
+
+  it("multiple listeners all fire", async () => {
+    const s1: string[] = [];
+    const s2: string[] = [];
+    const unsub1 = onSyncStatusChange((s) => s1.push(s));
+    const unsub2 = onSyncStatusChange((s) => s2.push(s));
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+
+    await flushQueue();
+    unsub1();
+    unsub2();
+
+    expect(s1).toEqual(s2);
+    expect(s1.length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+// ============================================================
+// 3b: Queue operations
+// ============================================================
+
+describe("queue operations", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // flushQueue (fire-and-forget from enqueue) returns early: no session
+    mockSupabase.auth.getSession.mockResolvedValue({ data: { session: null } });
+  });
+
+  it("enqueueUpsert adds upsert entry to sync_queue", async () => {
+    await enqueueUpsert(testBook);
+
+    expect(mockDb.sync_queue.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "b1",
+        operation: "upsert",
+        payload: testBook,
+      }),
+    );
+  });
+
+  it("enqueueDelete adds delete entry to sync_queue", async () => {
+    await enqueueDelete("b1");
+
+    expect(mockDb.sync_queue.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "b1",
+        operation: "delete",
+        payload: { id: "b1" },
+      }),
+    );
+  });
+});
+
+// ============================================================
+// 3c: flushQueue
+// ============================================================
+
+describe("flushQueue", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns early if no session", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce({ data: { session: null } });
+
+    await flushQueue();
+
+    expect(mockDb.sync_queue.toArray).not.toHaveBeenCalled();
+  });
+
+  it("returns early if queue is empty", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([]);
+
+    await flushQueue();
+
+    expect(mockSupabase.from).not.toHaveBeenCalled();
+  });
+
+  it("processes upsert: calls supabase upsert then deletes queue entry", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    const chain = mockChain({ error: null });
+    mockSupabase.from.mockReturnValue(chain);
+
+    await flushQueue();
+
+    expect(mockSupabase.from).toHaveBeenCalledWith("books");
+    expect(chain.upsert).toHaveBeenCalled();
+    expect(mockDb.sync_queue.delete).toHaveBeenCalledWith(1);
+  });
+
+  it("processes delete: calls supabase update with deleted_at", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 2, bookId: "b1", operation: "delete", payload: { id: "b1" }, createdAt: Date.now() },
+    ]);
+    const chain = mockChain({ error: null });
+    mockSupabase.from.mockReturnValue(chain);
+
+    await flushQueue();
+
+    expect(chain.update).toHaveBeenCalledWith(
+      expect.objectContaining({ deleted_at: expect.any(String) }),
+    );
+    expect(chain.eq).toHaveBeenCalledWith("id", "b1");
+    expect(chain.eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(mockDb.sync_queue.delete).toHaveBeenCalledWith(2);
+  });
+
+  it("sets status to syncing then synced on success", async () => {
+    const statuses: string[] = [];
+    const unsub = onSyncStatusChange((s) => statuses.push(s));
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+
+    await flushQueue();
+    unsub();
+
+    expect(statuses[0]).toBe("syncing");
+    expect(statuses[statuses.length - 1]).toBe("synced");
+  });
+
+  it("updates sync_metadata after successful flush", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    const chain = mockChain({ error: null });
+    mockSupabase.from.mockReturnValue(chain);
+
+    await flushQueue();
+
+    expect(mockSupabase.from).toHaveBeenCalledWith("sync_metadata");
+    expect(chain.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: "u1" }),
+    );
+  });
+
+  it("sets status to unsynced on error and stops processing", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+      { id: 2, bookId: "b2", operation: "upsert", payload: { ...testBook, id: "b2" }, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: { message: "DB error" } }));
+
+    await flushQueue();
+
+    expect(getSyncStatus()).toBe("unsynced");
+    // Queue entry not deleted on error
+    expect(mockDb.sync_queue.delete).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
+  });
+});
+
+// ============================================================
+// 3d: pullRemoteChanges
+// ============================================================
+
+describe("pullRemoteChanges", () => {
+  const storage: Record<string, string> = {};
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Mock localStorage (jsdom may not support .clear())
+    for (const key of Object.keys(storage)) delete storage[key];
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => storage[key] ?? null,
+      setItem: (key: string, value: string) => { storage[key] = value; },
+      removeItem: (key: string) => { delete storage[key]; },
+    });
+  });
+
+  it("returns early if no session", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce({ data: { session: null } });
+
+    await pullRemoteChanges();
+
+    expect(mockSupabase.from).not.toHaveBeenCalled();
+  });
+
+  it("first pull: fetches all books (no cursor filter)", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const chain = mockChain({ data: [], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+
+    await pullRemoteChanges();
+
+    expect(chain.select).toHaveBeenCalledWith("*");
+    expect(chain.eq).toHaveBeenCalledWith("user_id", "u1");
+    expect(chain.gt).not.toHaveBeenCalled();
+  });
+
+  it("subsequent pull: uses cursor for incremental fetch", async () => {
+    const cursor = "2023-11-14T22:30:00.000Z";
+    storage["tsundoku_last_synced_u1"] = cursor;
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const chain = mockChain({ data: [], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+
+    await pullRemoteChanges();
+
+    expect(chain.gt).toHaveBeenCalledWith("updated_at", cursor);
+  });
+
+  it("inserts new remote books into local db", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const remoteRow = {
+      id: "new-book",
+      title: "Remote Book",
+      author: "Remote Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      updated_at: "2023-11-14T22:30:00.000Z",
+      deleted_at: null,
+    };
+    const chain = mockChain({ data: [remoteRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce(undefined);
+
+    await pullRemoteChanges();
+
+    expect(mockDb.books.put).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "new-book", title: "Remote Book" }),
+    );
+  });
+
+  it("updates local book when remote is newer", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const remoteRow = {
+      id: "b1",
+      title: "Updated Title",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      updated_at: "2023-11-15T00:00:00.000Z",
+      deleted_at: null,
+    };
+    const chain = mockChain({ data: [remoteRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce({ ...testBook, updatedAt: 1700001000000 });
+
+    await pullRemoteChanges();
+
+    expect(mockDb.books.put).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "b1", title: "Updated Title" }),
+    );
+  });
+
+  it("skips update when local is newer", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const remoteRow = {
+      id: "b1",
+      title: "Old Title",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      updated_at: "2023-11-14T22:00:00.000Z",
+      deleted_at: null,
+    };
+    const chain = mockChain({ data: [remoteRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce({ ...testBook, updatedAt: 1700100000000 });
+
+    await pullRemoteChanges();
+
+    expect(mockDb.books.put).not.toHaveBeenCalled();
+  });
+
+  it("deletes local book when remote has deletedAt", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const remoteRow = {
+      id: "b1",
+      title: "Deleted Book",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      updated_at: "2023-11-14T22:30:00.000Z",
+      deleted_at: "2023-11-15T00:00:00.000Z",
+    };
+    const chain = mockChain({ data: [remoteRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+
+    await pullRemoteChanges();
+
+    expect(mockDb.books.delete).toHaveBeenCalledWith("b1");
+    expect(mockDb.books.put).not.toHaveBeenCalled();
+  });
+
+  it("sets localStorage cursor after successful pull", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const chain = mockChain({ data: [], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+
+    await pullRemoteChanges();
+
+    const cursor = storage["tsundoku_last_synced_u1"];
+    expect(cursor).toBeTruthy();
+    expect(new Date(cursor).getTime()).not.toBeNaN();
+  });
+});
+
+// ============================================================
+// 3e: startSyncListeners
+// ============================================================
+
+describe("startSyncListeners", () => {
+  it("returns a cleanup function", () => {
+    const cleanup = startSyncListeners();
+    expect(typeof cleanup).toBe("function");
+    cleanup();
+  });
+
+  it("adds online event listener", () => {
+    const spy = vi.spyOn(window, "addEventListener");
+    const cleanup = startSyncListeners();
+
+    expect(spy).toHaveBeenCalledWith("online", expect.any(Function));
+
+    cleanup();
+    spy.mockRestore();
+  });
+
+  it("sets up 5-minute interval", () => {
+    const spy = vi.spyOn(globalThis, "setInterval");
+    const cleanup = startSyncListeners();
+
+    expect(spy).toHaveBeenCalledWith(expect.any(Function), 5 * 60 * 1000);
+
+    cleanup();
+    spy.mockRestore();
+  });
+
+  it("cleanup removes listener and clears interval", () => {
+    const removeSpy = vi.spyOn(window, "removeEventListener");
+    const clearSpy = vi.spyOn(globalThis, "clearInterval");
+
+    const cleanup = startSyncListeners();
+    cleanup();
+
+    expect(removeSpy).toHaveBeenCalledWith("online", expect.any(Function));
+    expect(clearSpy).toHaveBeenCalled();
+
+    removeSpy.mockRestore();
+    clearSpy.mockRestore();
   });
 });

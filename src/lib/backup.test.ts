@@ -8,6 +8,7 @@ const mockBook: Book = {
   author: "Antoine de Saint-Exupery",
   coverUrl: "",
   stage: "bibliotheque",
+  position: 0,
   createdAt: 1700000000000,
   updatedAt: 1700000000000,
 };

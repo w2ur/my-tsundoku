@@ -71,12 +71,15 @@ export default function SettingsPage() {
   }
 
   // Task 21: Delete account
-  const [deleteState, setDeleteState] = useState<"idle" | "confirming" | "deleting">("idle");
+  const [deleteState, setDeleteState] = useState<"idle" | "confirming" | "deleting" | "error">("idle");
 
   async function handleDeleteAccount() {
     setDeleteState("deleting");
-    await deleteAccount();
-    // deleteAccount signs out automatically, auth state update will handle UI
+    const { error } = await deleteAccount();
+    if (error) {
+      setDeleteState("error");
+    }
+    // On success, signOut triggers onAuthStateChange which resets the UI
   }
 
   // Task 22: Sync status
@@ -167,6 +170,17 @@ export default function SettingsPage() {
                   )}
                   {deleteState === "deleting" && (
                     <p className="text-sm text-forest/50">{t("account_deleting")}</p>
+                  )}
+                  {deleteState === "error" && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-red-500">{t("account_deleteError")}</p>
+                      <button
+                        onClick={() => setDeleteState("idle")}
+                        className="text-sm text-forest/60 underline hover:text-forest/80 transition-colors"
+                      >
+                        {t("cancel")}
+                      </button>
+                    </div>
                   )}
                 </div>
               ) : authState === "sent" ? (
