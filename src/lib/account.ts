@@ -29,9 +29,8 @@ export async function deleteAccount(): Promise<{ error: string | null }> {
     return { error: rpcError.message };
   }
 
-  // 3. Clear local Dexie data
+  // 3. Clear sync queue (stale without an account) but keep local books
   if (db) {
-    await db.books.clear();
     await db.sync_queue.clear();
   }
 
