@@ -108,7 +108,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         createdAt: Date.now(),
       });
     }
-    await flushQueue();
+    const { failed } = await flushQueue();
+    if (failed > 0) {
+      console.warn(`Migration: ${failed} book(s) failed to sync — they will sync when edited`);
+    }
     setShowMigration(false);
   }
 

@@ -154,6 +154,37 @@ describe("sync field mapping", () => {
     expect(book.deletedAt).toBe(new Date("2023-11-15T00:00:00.000Z").getTime());
   });
 
+  it("uses safe defaults for undefined position and coverUrl", () => {
+    const book = {
+      id: "bad",
+      title: "Bad",
+      author: "Author",
+      stage: "tsundoku" as const,
+      createdAt: 1700000000000,
+      updatedAt: 1700000000000,
+    } as Book;
+    const row = mapBookToSupabase(book, "user-1");
+    expect(row.position).toBe(0);
+    expect(row.cover_url).toBe("");
+  });
+
+  it("uses current time for undefined createdAt/updatedAt", () => {
+    const book = {
+      id: "no-dates",
+      title: "No Dates",
+      author: "Author",
+      coverUrl: "",
+      stage: "tsundoku" as const,
+      position: 0,
+    } as Book;
+    const row = mapBookToSupabase(book, "user-1");
+    // Should be valid ISO strings (not "Invalid Date")
+    expect(() => new Date(row.created_at)).not.toThrow();
+    expect(new Date(row.created_at).getTime()).not.toBeNaN();
+    expect(() => new Date(row.updated_at)).not.toThrow();
+    expect(new Date(row.updated_at).getTime()).not.toBeNaN();
+  });
+
   it("handles missing optional fields gracefully", () => {
     const minimalBook: Book = {
       id: "min",
@@ -365,7 +396,7 @@ describe("flushQueue", () => {
     );
   });
 
-  it("sets status to unsynced on error and stops processing", async () => {
+  it("skips failed entries and continues processing (poison pill removal)", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
@@ -375,13 +406,60 @@ describe("flushQueue", () => {
     ]);
     mockSupabase.from.mockReturnValue(mockChain({ error: { message: "DB error" } }));
 
-    await flushQueue();
+    const result = await flushQueue();
 
     expect(getSyncStatus()).toBe("unsynced");
-    // Queue entry not deleted on error
-    expect(mockDb.sync_queue.delete).not.toHaveBeenCalled();
+    // Failed entries are deleted from queue (poison pill removal)
+    expect(mockDb.sync_queue.delete).toHaveBeenCalledWith(1);
+    expect(mockDb.sync_queue.delete).toHaveBeenCalledWith(2);
+    // Both entries processed (not stopped at first error)
+    expect(result).toEqual({ flushed: 0, failed: 2 });
 
     vi.restoreAllMocks();
+  });
+
+  it("returns flushed/failed counts on mixed success", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+      { id: 2, bookId: "b2", operation: "upsert", payload: { ...testBook, id: "b2" }, createdAt: Date.now() },
+    ]);
+    // First call succeeds, second fails
+    const successChain = mockChain({ error: null });
+    const errorChain = mockChain({ error: { message: "constraint violation" } });
+    mockSupabase.from
+      .mockReturnValueOnce(successChain)
+      .mockReturnValueOnce(errorChain)
+      .mockReturnValue(mockChain({ error: null })); // sync_metadata
+
+    const result = await flushQueue();
+
+    expect(result).toEqual({ flushed: 1, failed: 1 });
+    expect(getSyncStatus()).toBe("unsynced");
+
+    vi.restoreAllMocks();
+  });
+
+  it("returns { flushed, failed } on success", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+
+    const result = await flushQueue();
+
+    expect(result).toEqual({ flushed: 1, failed: 0 });
+  });
+
+  it("returns { flushed: 0, failed: 0 } when no session", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce({ data: { session: null } });
+
+    const result = await flushQueue();
+
+    expect(result).toEqual({ flushed: 0, failed: 0 });
   });
 });
 

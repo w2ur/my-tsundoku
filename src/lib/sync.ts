@@ -5,21 +5,22 @@ import type { Book, Stage } from "./types";
 // ---- Field Mapping ----
 
 export function mapBookToSupabase(book: Book, userId: string) {
+  const now = new Date().toISOString();
   return {
     id: book.id,
     user_id: userId,
     title: book.title,
     author: book.author,
-    cover_url: book.coverUrl,
+    cover_url: book.coverUrl ?? "",
     stage: book.stage,
-    position: book.position,
+    position: book.position ?? 0,
     is_reading: book.isReading ?? false,
     notes: book.notes ?? null,
     store_url: book.storeUrl ?? null,
     isbn: book.isbn ?? null,
     ol_work_id: book.olWorkId ?? null,
-    created_at: new Date(book.createdAt).toISOString(),
-    updated_at: new Date(book.updatedAt).toISOString(),
+    created_at: book.createdAt ? new Date(book.createdAt).toISOString() : now,
+    updated_at: book.updatedAt ? new Date(book.updatedAt).toISOString() : now,
     deleted_at: book.deletedAt ? new Date(book.deletedAt).toISOString() : null,
   };
 }
@@ -98,20 +99,23 @@ export async function enqueueDelete(bookId: string): Promise<void> {
 
 let flushing = false;
 
-export async function flushQueue(): Promise<void> {
-  if (!supabase || !db || flushing) return;
+export async function flushQueue(): Promise<{ flushed: number; failed: number }> {
+  if (!supabase || !db || flushing) return { flushed: 0, failed: 0 };
 
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  if (!session) return;
+  if (!session) return { flushed: 0, failed: 0 };
 
   const userId = session.user.id;
   const entries = await db.sync_queue.toArray();
-  if (entries.length === 0) return;
+  if (entries.length === 0) return { flushed: 0, failed: 0 };
 
   flushing = true;
   setStatus("syncing");
+
+  let flushed = 0;
+  let failed = 0;
 
   for (const entry of entries) {
     try {
@@ -129,11 +133,11 @@ export async function flushQueue(): Promise<void> {
         if (error) throw error;
       }
       await db.sync_queue.delete(entry.id!);
+      flushed++;
     } catch (err) {
-      console.error("Sync flush error:", err);
-      setStatus("unsynced");
-      flushing = false;
-      return;
+      console.error("Sync flush error for entry", entry.id, entry.bookId, err);
+      await db.sync_queue.delete(entry.id!);
+      failed++;
     }
   }
 
@@ -142,8 +146,9 @@ export async function flushQueue(): Promise<void> {
     last_synced_at: new Date().toISOString(),
   });
 
-  setStatus("synced");
+  setStatus(failed > 0 ? "unsynced" : "synced");
   flushing = false;
+  return { flushed, failed };
 }
 
 // ---- Per-Device Sync Cursor ----
