@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.0.1",
+    date: "2026-03-03",
+    changes: {
+      fr: [
+        "Connexion par code à 6 chiffres au lieu du lien magique — fonctionne dans la PWA installée",
+      ],
+      en: [
+        "Sign in with 6-digit code instead of magic link — works in the installed PWA",
+      ],
+    },
+  },
+  {
     version: "2.0.0",
     date: "2026-02-28",
     changes: {

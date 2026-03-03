@@ -24,17 +24,39 @@ export default function SettingsPage() {
   const { t, locale, setLocale } = useTranslation();
   const { theme, setTheme } = useTheme();
 
-  const { user, isSignedIn, isLoading: authLoading, signInWithMagicLink, signOut } = useAuth();
+  const { user, isSignedIn, isLoading: authLoading, signInWithOtp, verifyOtpCode, signOut } = useAuth();
   const [email, setEmail] = useState("");
-  const [authState, setAuthState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [otpCode, setOtpCode] = useState("");
+  const [authState, setAuthState] = useState<"idle" | "sending" | "sent" | "verifying" | "verify_error">("idle");
 
-  async function handleSignIn(e: React.FormEvent) {
+  async function handleSendCode(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim()) return;
     setAuthState("sending");
-    const { error } = await signInWithMagicLink(email.trim());
-    if (error) console.error("[auth] magic link error:", error);
-    setAuthState(error ? "error" : "sent");
+    const { error } = await signInWithOtp(email.trim());
+    if (error) console.error("[auth] OTP send error:", error);
+    setAuthState(error ? "idle" : "sent");
+  }
+
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (otpCode.length < 6) return;
+    setAuthState("verifying");
+    const { error } = await verifyOtpCode(email.trim(), otpCode);
+    if (error) {
+      console.error("[auth] OTP verify error:", error);
+      setAuthState("verify_error");
+    }
+    // On success, onAuthStateChange in AuthProvider handles the rest
+  }
+
+  function handleResendCode() {
+    setOtpCode("");
+    setAuthState("sending");
+    signInWithOtp(email.trim()).then(({ error }) => {
+      if (error) console.error("[auth] OTP resend error:", error);
+      setAuthState(error ? "verify_error" : "sent");
+    });
   }
 
   const [showPreferences, setShowPreferences] = useState(false);
@@ -202,28 +224,54 @@ export default function SettingsPage() {
                     </div>
                   )}
                 </div>
-              ) : authState === "sent" ? (
+              ) : authState === "sent" || authState === "verifying" || authState === "verify_error" ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-forest/70">{t("account_checkEmail")}</p>
+                  <p className="text-sm text-forest/70">
+                    {t("account_enterCode").replace("{email}", email)}
+                  </p>
+                  <form onSubmit={handleVerifyCode} className="flex gap-2">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                      placeholder={t("account_otpPlaceholder")}
+                      className="flex-1 text-sm bg-paper border border-forest/15 rounded-lg px-3 py-2 text-ink placeholder:text-forest/30 focus:outline-none focus:border-forest/40 tracking-[0.3em] text-center font-medium"
+                      disabled={authState === "verifying"}
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      disabled={authState === "verifying" || otpCode.length < 6}
+                      className="text-sm bg-forest text-paper rounded-lg px-3 py-2 font-medium disabled:opacity-50 transition-opacity"
+                    >
+                      {authState === "verifying"
+                        ? t("account_verifying")
+                        : t("account_verify")}
+                    </button>
+                  </form>
+                  {authState === "verify_error" && (
+                    <p className="text-xs text-red-500">{t("account_verifyError")}</p>
+                  )}
                   <div className="flex gap-3 text-sm">
                     <button
-                      onClick={() => {
-                        setAuthState("sending");
-                        signInWithMagicLink(email.trim()).then(({ error }) =>
-                          setAuthState(error ? "error" : "sent")
-                        );
-                      }}
-                      className="text-forest/60 underline hover:text-forest/80 transition-colors"
+                      onClick={handleResendCode}
+                      disabled={authState === "verifying"}
+                      className="text-forest/60 underline hover:text-forest/80 transition-colors disabled:opacity-50"
                     >
-                      {t("account_resend")}
+                      {t("account_resendCode")}
                     </button>
                     <span className="text-forest/20">·</span>
                     <button
                       onClick={() => {
                         setEmail("");
+                        setOtpCode("");
                         setAuthState("idle");
                       }}
-                      className="text-forest/60 underline hover:text-forest/80 transition-colors"
+                      disabled={authState === "verifying"}
+                      className="text-forest/60 underline hover:text-forest/80 transition-colors disabled:opacity-50"
                     >
                       {t("account_differentEmail")}
                     </button>
@@ -232,7 +280,7 @@ export default function SettingsPage() {
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-forest/70">{t("account_signInPrompt")}</p>
-                  <form onSubmit={handleSignIn} className="flex gap-2">
+                  <form onSubmit={handleSendCode} className="flex gap-2">
                     <input
                       type="email"
                       value={email}
@@ -248,12 +296,9 @@ export default function SettingsPage() {
                     >
                       {authState === "sending"
                         ? t("account_sending")
-                        : t("account_sendMagicLink")}
+                        : t("account_sendCode")}
                     </button>
                   </form>
-                  {authState === "error" && (
-                    <p className="text-xs text-red-500">{t("account_error")}</p>
-                  )}
                 </div>
               )}
             </div>

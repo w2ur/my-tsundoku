@@ -9,7 +9,7 @@ Tsundoku is a PWA for organizing personal book collections using a Kanban-style 
 - **Framework**: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript
 - **Styling**: Tailwind CSS v4
 - **Database**: Dexie.js (IndexedDB) — local-first, all data stored client-side
-- **Cloud**: Supabase (Auth, Postgres, Storage) — magic link auth, cloud sync, community catalog
+- **Cloud**: Supabase (Auth, Postgres, Storage) — OTP code auth, cloud sync, community catalog
 - **PWA**: Serwist (configurator mode) — `serwist.config.js` + `serwist build` post-step
 - **Drag & Drop**: @dnd-kit/core + @dnd-kit/sortable (stable v5/v6)
 - **Animations**: motion
@@ -41,7 +41,7 @@ Environment variables (see `.env.example`):
 - `src/lib/i18n/` — translation dictionaries (fr.ts canonical, en.ts), locale types, plural helper
 - `src/hooks/` — useBooks, useBook, useBooksByStage (Dexie live queries), useIsMobile
 - `src/components/` — reusable UI components
-- `src/app/` — routes: `/`, `/add/`, `/add/scan`, `/add/manual`, `/book/[id]`, `/settings`, `/auth/callback`, `/~offline`
+- `src/app/` — routes: `/`, `/add/`, `/add/scan`, `/add/manual`, `/book/[id]`, `/settings`, `/~offline`
 - `src/app/sw.ts` — service worker (excluded from tsconfig, compiled by Serwist CLI)
 - `supabase/migrations/` — SQL migration files for Supabase schema
 

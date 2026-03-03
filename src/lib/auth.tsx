@@ -11,7 +11,8 @@ interface AuthContextValue {
   user: User | null;
   isSignedIn: boolean;
   isLoading: boolean;
-  signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
+  signInWithOtp: (email: string) => Promise<{ error: string | null }>;
+  verifyOtpCode: (email: string, code: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -127,13 +128,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fullSync();
   }
 
-  const signInWithMagicLink = useCallback(async (email: string) => {
+  const signInWithOtp = useCallback(async (email: string) => {
     if (!supabase) return { error: "Not available on server" };
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    return { error: error?.message ?? null };
+  }, []);
+
+  const verifyOtpCode = useCallback(async (email: string, code: string) => {
+    if (!supabase) return { error: "Not available on server" };
+    const { error } = await supabase.auth.verifyOtp({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      token: code,
+      type: "email",
     });
     return { error: error?.message ?? null };
   }, []);
@@ -149,7 +155,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isSignedIn: !!user,
       isLoading,
-      signInWithMagicLink,
+      signInWithOtp,
+      verifyOtpCode,
       signOut,
     }}>
       {children}
