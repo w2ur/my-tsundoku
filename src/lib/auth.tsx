@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import { supabase } from "./supabase";
 import { db } from "./db";
-import { fullSync, startSyncListeners, enqueueUpsert, flushQueue } from "./sync";
+import { fullSync, startSyncListeners, flushQueue } from "./sync";
 import type { User } from "@supabase/supabase-js";
 import MigrationPrompt from "@/components/MigrationPrompt";
 
@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [showMigration, setShowMigration] = useState(false);
   const [localBookCount, setLocalBookCount] = useState(0);
   const syncCleanupRef = useRef<(() => void) | null>(null);
+  const syncedUserRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!supabase) {
@@ -40,17 +41,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Listen for auth changes
+    // Listen for auth changes (only act on sign-in/sign-out, not token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         const newUser = session?.user ?? null;
         setUser(newUser);
-        if (newUser) {
-          initSync(newUser);
-        } else {
-          // User signed out — clean up sync listeners
+        if (!newUser) {
           syncCleanupRef.current?.();
           syncCleanupRef.current = null;
+          syncedUserRef.current = null;
+        } else if (event === "SIGNED_IN") {
+          initSync(newUser);
         }
       }
     );
@@ -63,6 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function initSync(currentUser: User) {
     if (!supabase || !db) return;
+
+    // Skip if already initialized for this user
+    if (syncedUserRef.current === currentUser.id) return;
+    syncedUserRef.current = currentUser.id;
 
     // Start sync listeners (online/offline, periodic)
     syncCleanupRef.current?.();
@@ -93,9 +98,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
+    // Batch-add all books to sync queue, then flush once
     const localBooks = await db.books.toArray();
     for (const book of localBooks) {
-      enqueueUpsert(book);
+      await db.sync_queue.add({
+        bookId: book.id,
+        operation: "upsert" as const,
+        payload: book,
+        createdAt: Date.now(),
+      });
     }
     await flushQueue();
     setShowMigration(false);
