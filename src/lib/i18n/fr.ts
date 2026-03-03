@@ -140,6 +140,8 @@ const fr = {
   sync_syncing: "Synchronisation...",
   sync_pending: "{count} modification(s) en attente",
   sync_lastSynced: "Dernière sync il y a {time}",
+  sync_forceResync: "Forcer la resynchronisation",
+  sync_resyncing: "Resynchronisation...",
   migration_title: "Transférer vos livres ?",
   migration_message: "Vous avez {count} livre(s) sur cet appareil. Les transférer vers votre compte ?",
   migration_upload: "Oui, transférer",

@@ -13,7 +13,7 @@ import { useTranslation, useTheme } from "@/lib/preferences";
 import { plural } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { getSyncStatus, onSyncStatusChange, type SyncStatus } from "@/lib/sync";
+import { getSyncStatus, onSyncStatusChange, resetLocalSyncCursor, fullSync, type SyncStatus } from "@/lib/sync";
 import { deleteAccount } from "@/lib/account";
 
 export default function SettingsPage() {
@@ -84,6 +84,15 @@ export default function SettingsPage() {
 
   // Task 22: Sync status
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => getSyncStatus());
+  const [resyncing, setResyncing] = useState(false);
+
+  async function handleForceResync() {
+    if (!user || resyncing) return;
+    setResyncing(true);
+    resetLocalSyncCursor(user.id);
+    await fullSync();
+    setResyncing(false);
+  }
 
   useEffect(() => {
     const unsubscribe = onSyncStatusChange((status) => {
@@ -135,12 +144,22 @@ export default function SettingsPage() {
                     </p>
                     <div className="mt-1">{renderSyncStatus()}</div>
                   </div>
-                  <button
-                    onClick={() => signOut()}
-                    className="text-sm text-forest/60 underline hover:text-forest/80 transition-colors"
-                  >
-                    {t("account_signOut")}
-                  </button>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => signOut()}
+                      className="text-sm text-forest/60 underline hover:text-forest/80 transition-colors"
+                    >
+                      {t("account_signOut")}
+                    </button>
+                    <span className="text-forest/20">·</span>
+                    <button
+                      onClick={handleForceResync}
+                      disabled={resyncing}
+                      className="text-sm text-forest/60 underline hover:text-forest/80 transition-colors disabled:opacity-50"
+                    >
+                      {resyncing ? t("sync_resyncing") : t("sync_forceResync")}
+                    </button>
+                  </div>
                   {deleteState === "idle" && (
                     <button
                       onClick={() => setDeleteState("confirming")}

@@ -153,6 +153,14 @@ export async function flushQueue(): Promise<{ flushed: number; failed: number }>
 
 // ---- Per-Device Sync Cursor ----
 
+export function resetLocalSyncCursor(userId: string): void {
+  try {
+    localStorage.removeItem(`tsundoku_last_synced_${userId}`);
+  } catch {
+    // localStorage unavailable
+  }
+}
+
 function getLocalSyncCursor(userId: string): string | null {
   try {
     return localStorage.getItem(`tsundoku_last_synced_${userId}`);
