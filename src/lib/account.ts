@@ -23,7 +23,12 @@ export async function deleteAccount(): Promise<{ error: string | null }> {
     // Storage failure is non-blocking
   }
 
-  // 2. Delete auth user via RPC (cascades all cloud data)
+  // 2. Explicitly delete public-schema data (cascade from auth.users is unreliable)
+  await supabase.from("books").delete().eq("user_id", userId);
+  await supabase.from("sync_metadata").delete().eq("user_id", userId);
+  await supabase.from("profiles").delete().eq("id", userId);
+
+  // 3. Delete auth user via RPC
   const { error: rpcError } = await supabase.rpc("delete_own_account");
   if (rpcError) {
     return { error: rpcError.message };
