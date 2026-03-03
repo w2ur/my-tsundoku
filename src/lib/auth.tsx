@@ -93,26 +93,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function handleMigrationUpload() {
-    if (!supabase || !db) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+  const migrationInProgressRef = useRef(false);
 
-    // Batch-add all books to sync queue, then flush once
-    const localBooks = await db.books.toArray();
-    for (const book of localBooks) {
-      await db.sync_queue.add({
-        bookId: book.id,
-        operation: "upsert" as const,
-        payload: book,
-        createdAt: Date.now(),
-      });
+  async function handleMigrationUpload() {
+    if (migrationInProgressRef.current || !supabase || !db) return;
+    migrationInProgressRef.current = true;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      // Batch-add all books to sync queue, then flush once
+      const localBooks = await db.books.toArray();
+      for (const book of localBooks) {
+        await db.sync_queue.add({
+          bookId: book.id,
+          operation: "upsert" as const,
+          payload: book,
+          createdAt: Date.now(),
+        });
+      }
+      const { failed } = await flushQueue();
+      if (failed > 0) {
+        console.warn(`Migration: ${failed} book(s) failed to sync — they will sync when edited`);
+      }
+      setShowMigration(false);
+    } finally {
+      migrationInProgressRef.current = false;
     }
-    const { failed } = await flushQueue();
-    if (failed > 0) {
-      console.warn(`Migration: ${failed} book(s) failed to sync — they will sync when edited`);
-    }
-    setShowMigration(false);
   }
 
   function handleMigrationSkip() {

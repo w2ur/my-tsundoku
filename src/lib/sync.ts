@@ -26,6 +26,7 @@ export function mapBookToSupabase(book: Book, userId: string) {
 }
 
 export function mapSupabaseToBook(row: Record<string, unknown>): Book {
+  const now = Date.now();
   const book: Book = {
     id: row.id as string,
     title: row.title as string,
@@ -33,8 +34,8 @@ export function mapSupabaseToBook(row: Record<string, unknown>): Book {
     coverUrl: (row.cover_url as string) ?? "",
     stage: row.stage as Stage,
     position: (row.position as number) ?? 0,
-    createdAt: new Date(row.created_at as string).getTime(),
-    updatedAt: new Date(row.updated_at as string).getTime(),
+    createdAt: row.created_at ? new Date(row.created_at as string).getTime() : now,
+    updatedAt: row.updated_at ? new Date(row.updated_at as string).getTime() : now,
     isReading: (row.is_reading as boolean) ?? false,
   };
 
@@ -117,37 +118,45 @@ export async function flushQueue(): Promise<{ flushed: number; failed: number }>
   let flushed = 0;
   let failed = 0;
 
-  for (const entry of entries) {
-    try {
-      if (entry.operation === "upsert") {
-        const book = entry.payload as Book;
-        const row = mapBookToSupabase(book, userId);
-        const { error } = await supabase.from("books").upsert(row);
-        if (error) throw error;
-      } else if (entry.operation === "delete") {
-        const { error } = await supabase
-          .from("books")
-          .update({ deleted_at: new Date().toISOString() })
-          .eq("id", entry.bookId)
-          .eq("user_id", userId);
-        if (error) throw error;
+  try {
+    for (const entry of entries) {
+      try {
+        if (entry.operation === "upsert") {
+          const book = entry.payload as Book;
+          const row = mapBookToSupabase(book, userId);
+          const { error } = await supabase.from("books").upsert(row);
+          if (error) throw error;
+        } else if (entry.operation === "delete") {
+          const { error } = await supabase
+            .from("books")
+            .update({ deleted_at: new Date().toISOString() })
+            .eq("id", entry.bookId)
+            .eq("user_id", userId);
+          if (error) throw error;
+        }
+        await db.sync_queue.delete(entry.id!);
+        flushed++;
+      } catch (err) {
+        // Supabase API errors (constraint violations, RLS) have a `code` — permanent, delete poison pill.
+        // Network/transient errors don't — keep in queue for retry.
+        const isPermanent = err != null && typeof err === "object" && "code" in err;
+        console.error("Sync flush error for entry", entry.id, entry.bookId, isPermanent ? "(permanent)" : "(transient)", err);
+        if (isPermanent) {
+          await db.sync_queue.delete(entry.id!);
+        }
+        failed++;
       }
-      await db.sync_queue.delete(entry.id!);
-      flushed++;
-    } catch (err) {
-      console.error("Sync flush error for entry", entry.id, entry.bookId, err);
-      await db.sync_queue.delete(entry.id!);
-      failed++;
     }
+
+    await supabase.from("sync_metadata").upsert({
+      user_id: userId,
+      last_synced_at: new Date().toISOString(),
+    });
+
+    setStatus(failed > 0 ? "unsynced" : "synced");
+  } finally {
+    flushing = false;
   }
-
-  await supabase.from("sync_metadata").upsert({
-    user_id: userId,
-    last_synced_at: new Date().toISOString(),
-  });
-
-  setStatus(failed > 0 ? "unsynced" : "synced");
-  flushing = false;
   return { flushed, failed };
 }
 
@@ -179,52 +188,69 @@ function setLocalSyncCursor(userId: string): void {
 
 // ---- Pull ----
 
+let pulling = false;
+
 export async function pullRemoteChanges(): Promise<void> {
-  if (!supabase || !db) return;
+  if (!supabase || !db || pulling) return;
 
   const {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) return;
 
-  const userId = session.user.id;
-  const localCursor = getLocalSyncCursor(userId);
+  pulling = true;
 
-  // Build query — on first pull (no local cursor), fetch ALL books
-  let query = supabase
-    .from("books")
-    .select("*")
-    .eq("user_id", userId);
+  try {
+    const userId = session.user.id;
+    const localCursor = getLocalSyncCursor(userId);
 
-  if (localCursor) {
-    query = query.gt("updated_at", localCursor);
-  }
+    // Build query — on first pull (no local cursor), fetch ALL books
+    let query = supabase
+      .from("books")
+      .select("*")
+      .eq("user_id", userId);
 
-  const { data: remoteRows, error } = await query;
-
-  if (error || !remoteRows) return;
-
-  for (const row of remoteRows) {
-    const remoteBook = mapSupabaseToBook(row);
-
-    if (remoteBook.deletedAt) {
-      await db.books.delete(remoteBook.id);
-      continue;
+    if (localCursor) {
+      query = query.gt("updated_at", localCursor);
     }
 
-    const localBook = await db.books.get(remoteBook.id);
-    if (!localBook || remoteBook.updatedAt > localBook.updatedAt) {
-      await db.books.put(remoteBook);
+    const { data: remoteRows, error } = await query;
+
+    if (error || !remoteRows) return;
+
+    let allSucceeded = true;
+
+    for (const row of remoteRows) {
+      try {
+        const remoteBook = mapSupabaseToBook(row);
+
+        if (remoteBook.deletedAt) {
+          await db.books.delete(remoteBook.id);
+          continue;
+        }
+
+        const localBook = await db.books.get(remoteBook.id);
+        if (!localBook || remoteBook.updatedAt > localBook.updatedAt) {
+          await db.books.put(remoteBook);
+        }
+      } catch (err) {
+        console.error("pullRemoteChanges: failed to write book", row.id, err);
+        allSucceeded = false;
+      }
     }
+
+    // Only advance cursor if all writes succeeded — otherwise retry on next pull
+    if (allSucceeded) {
+      setLocalSyncCursor(userId);
+
+      await supabase.from("sync_metadata").upsert({
+        user_id: userId,
+        last_synced_at: new Date().toISOString(),
+      });
+    }
+  } finally {
+    pulling = false;
   }
-
-  // Update both local cursor and remote metadata
-  setLocalSyncCursor(userId);
-
-  await supabase.from("sync_metadata").upsert({
-    user_id: userId,
-    last_synced_at: new Date().toISOString(),
-  });
 }
 
 // ---- Full Sync (pull + flush) ----

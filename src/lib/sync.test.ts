@@ -185,6 +185,26 @@ describe("sync field mapping", () => {
     expect(new Date(row.updated_at).getTime()).not.toBeNaN();
   });
 
+  it("mapSupabaseToBook uses safe defaults for null/missing dates", () => {
+    const row = {
+      id: "null-dates",
+      title: "Null Dates",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: null,
+      updated_at: null,
+      deleted_at: null,
+    };
+    const book = mapSupabaseToBook(row);
+    expect(book.createdAt).not.toBeNaN();
+    expect(book.updatedAt).not.toBeNaN();
+    expect(book.createdAt).toBeGreaterThan(0);
+    expect(book.updatedAt).toBeGreaterThan(0);
+  });
+
   it("handles missing optional fields gracefully", () => {
     const minimalBook: Book = {
       id: "min",
@@ -396,7 +416,7 @@ describe("flushQueue", () => {
     );
   });
 
-  it("skips failed entries and continues processing (poison pill removal)", async () => {
+  it("deletes queue entry on permanent error (Supabase constraint) and continues", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
@@ -404,16 +424,43 @@ describe("flushQueue", () => {
       { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
       { id: 2, bookId: "b2", operation: "upsert", payload: { ...testBook, id: "b2" }, createdAt: Date.now() },
     ]);
-    mockSupabase.from.mockReturnValue(mockChain({ error: { message: "DB error" } }));
+    // Supabase API errors have a `code` property — treated as permanent
+    mockSupabase.from.mockReturnValue(mockChain({ error: { message: "constraint violation", code: "23505" } }));
 
     const result = await flushQueue();
 
     expect(getSyncStatus()).toBe("unsynced");
-    // Failed entries are deleted from queue (poison pill removal)
+    // Permanent errors: entries deleted from queue (poison pill removal)
     expect(mockDb.sync_queue.delete).toHaveBeenCalledWith(1);
     expect(mockDb.sync_queue.delete).toHaveBeenCalledWith(2);
     // Both entries processed (not stopped at first error)
     expect(result).toEqual({ flushed: 0, failed: 2 });
+
+    vi.restoreAllMocks();
+  });
+
+  it("keeps queue entry on transient error (network) for retry", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    // Network errors don't have a `code` — treated as transient
+    const throwingChain = mockChain({ error: null });
+    (throwingChain.upsert as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new TypeError("Failed to fetch");
+    });
+    mockSupabase.from
+      .mockReturnValueOnce(throwingChain) // books table — throws
+      .mockReturnValue(mockChain({ error: null })); // sync_metadata — normal
+
+    const result = await flushQueue();
+
+    expect(getSyncStatus()).toBe("unsynced");
+    // Transient error: entry NOT deleted — kept for retry
+    expect(mockDb.sync_queue.delete).not.toHaveBeenCalled();
+    expect(result).toEqual({ flushed: 0, failed: 1 });
 
     vi.restoreAllMocks();
   });
@@ -426,9 +473,9 @@ describe("flushQueue", () => {
       { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
       { id: 2, bookId: "b2", operation: "upsert", payload: { ...testBook, id: "b2" }, createdAt: Date.now() },
     ]);
-    // First call succeeds, second fails
+    // First call succeeds, second fails with permanent error
     const successChain = mockChain({ error: null });
-    const errorChain = mockChain({ error: { message: "constraint violation" } });
+    const errorChain = mockChain({ error: { message: "constraint violation", code: "23505" } });
     mockSupabase.from
       .mockReturnValueOnce(successChain)
       .mockReturnValueOnce(errorChain)
@@ -620,6 +667,39 @@ describe("pullRemoteChanges", () => {
     const cursor = storage["tsundoku_last_synced_u1"];
     expect(cursor).toBeTruthy();
     expect(new Date(cursor).getTime()).not.toBeNaN();
+  });
+
+  it("does not advance cursor when a Dexie write fails", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // Set an existing cursor
+    storage["tsundoku_last_synced_u1"] = "2023-11-14T00:00:00.000Z";
+    const originalCursor = storage["tsundoku_last_synced_u1"];
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const remoteRow = {
+      id: "new-book",
+      title: "Remote Book",
+      author: "Remote Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      updated_at: "2023-11-14T22:30:00.000Z",
+      deleted_at: null,
+    };
+    const chain = mockChain({ data: [remoteRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce(undefined);
+    mockDb.books.put.mockRejectedValueOnce(new Error("IndexedDB quota exceeded"));
+
+    await pullRemoteChanges();
+
+    // Cursor should NOT have advanced
+    expect(storage["tsundoku_last_synced_u1"]).toBe(originalCursor);
+
+    vi.restoreAllMocks();
   });
 });
 
