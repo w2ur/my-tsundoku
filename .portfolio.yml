@@ -1,0 +1,29 @@
+name: "My Tsundoku"
+slug: my-tsundoku
+tagline: "Collectionner des livres qu'on ne lira jamais, mais avec méthode."
+description: "Bibliothèque personnelle en Kanban — wishlist, pile à lire, lus, à revendre. Inspiré du concept japonais d'accumuler des livres sans les lire."
+
+audience: public
+visibility: public
+status: production
+
+url: https://my-tsundoku.app
+domain: my-tsundoku.app
+deploy: vercel
+
+portfolio_card: true
+portfolio_link: true
+badge: null
+
+icon_emoji: "📚"
+icon_file: public/icons/icon-192.svg
+
+stack:
+  - Next.js
+  - React
+  - TypeScript
+  - Tailwind
+  - Dexie.js
+
+repo_public: true
+license: AGPL-3.0
