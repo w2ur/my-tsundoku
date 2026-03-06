@@ -14,6 +14,7 @@ deploy: vercel
 portfolio_card: true
 portfolio_link: true
 badge: null
+sort_order: 1
 
 icon_emoji: "📚"
 icon_file: public/icons/icon-192.svg
