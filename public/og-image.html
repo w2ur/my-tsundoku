@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 1200px;
+      height: 630px;
+      background-color: #FAF8F5;
+      font-family: 'Playfair Display', serif;
+      overflow: hidden;
+    }
+
+    .container {
+      width: 1200px;
+      height: 630px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      padding: 0 96px;
+      background: linear-gradient(135deg, #FAF8F5 0%, #F5F0EB 50%, #EDE6DD 100%);
+    }
+
+    .left {
+      flex: 1;
+      z-index: 1;
+    }
+
+    .label {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #C4956A;
+      margin-bottom: 20px;
+    }
+
+    .title {
+      font-size: 80px;
+      font-weight: 700;
+      color: #2D4A3E;
+      line-height: 1;
+      margin-bottom: 24px;
+    }
+
+    .tagline {
+      font-family: 'Inter', sans-serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: #5A7A6B;
+      line-height: 1.5;
+      max-width: 480px;
+    }
+
+    .url {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      color: #8B7D6B;
+      margin-top: 40px;
+    }
+
+    /* Decorative book stack */
+    .books {
+      position: absolute;
+      right: 80px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .book {
+      border-radius: 3px;
+      position: relative;
+    }
+
+    .book::after {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 8px;
+      bottom: 8px;
+      width: 2px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 1px;
+    }
+
+    .b1 { width: 42px; height: 280px; background: #2D4A3E; }
+    .b2 { width: 36px; height: 340px; background: #C4956A; }
+    .b3 { width: 48px; height: 300px; background: #5A7A6B; }
+    .b4 { width: 34px; height: 360px; background: #8B7D6B; }
+    .b5 { width: 44px; height: 260px; background: #2D4A3E; opacity: 0.7; }
+    .b6 { width: 38px; height: 320px; background: #C4956A; opacity: 0.8; }
+    .b7 { width: 46px; height: 290px; background: #3D5A4E; }
+
+    /* Leaf pattern */
+    .leaf {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      opacity: 0.08;
+    }
+
+    .leaf svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .leaf-1 { top: 40px; right: 320px; transform: rotate(25deg); }
+    .leaf-2 { bottom: 60px; right: 380px; transform: rotate(-15deg); }
+    .leaf-3 { top: 80px; left: 60px; transform: rotate(45deg); opacity: 0.05; }
+    .leaf-4 { bottom: 40px; left: 200px; transform: rotate(-30deg); opacity: 0.05; }
+  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <div class="label">Your Personal Library</div>
+      <div class="title">My<br>Tsundoku</div>
+      <div class="tagline">Your personal book collection,<br>beautifully organized.</div>
+      <div class="url">my-tsundoku.app</div>
+    </div>
+
+    <div class="books">
+      <div class="book b1"></div>
+      <div class="book b2"></div>
+      <div class="book b3"></div>
+      <div class="book b4"></div>
+      <div class="book b5"></div>
+      <div class="book b6"></div>
+      <div class="book b7"></div>
+    </div>
+
+    <div class="leaf leaf-1">
+      <svg viewBox="0 0 100 100" fill="#2D4A3E">
+        <path d="M50 5C50 5 20 30 20 60C20 80 35 95 50 95C65 95 80 80 80 60C80 30 50 5 50 5Z"/>
+      </svg>
+    </div>
+    <div class="leaf leaf-2">
+      <svg viewBox="0 0 100 100" fill="#2D4A3E">
+        <path d="M50 5C50 5 20 30 20 60C20 80 35 95 50 95C65 95 80 80 80 60C80 30 50 5 50 5Z"/>
+      </svg>
+    </div>
+    <div class="leaf leaf-3">
+      <svg viewBox="0 0 100 100" fill="#2D4A3E">
+        <path d="M50 5C50 5 20 30 20 60C20 80 35 95 50 95C65 95 80 80 80 60C80 30 50 5 50 5Z"/>
+      </svg>
+    </div>
+    <div class="leaf leaf-4">
+      <svg viewBox="0 0 100 100" fill="#2D4A3E">
+        <path d="M50 5C50 5 20 30 20 60C20 80 35 95 50 95C65 95 80 80 80 60C80 30 50 5 50 5Z"/>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

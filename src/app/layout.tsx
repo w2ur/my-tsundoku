@@ -23,6 +23,22 @@ export const metadata: Metadata = {
   icons: {
     apple: "/icons/apple-touch-icon.png",
   },
+  openGraph: {
+    title: "My Tsundoku",
+    description: "Your personal book collection, beautifully organized",
+    url: "https://my-tsundoku.app",
+    images: [
+      {
+        url: "https://my-tsundoku.app/og-image.png",
+        width: 1200,
+        height: 630,
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export const viewport: Viewport = {
