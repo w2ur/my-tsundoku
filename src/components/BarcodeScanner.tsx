@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useTranslation } from "@/lib/preferences";
+import type { IScannerControls } from "@zxing/browser";
 
 interface Props {
   onScan: (isbn: string) => void;
@@ -10,9 +11,9 @@ interface Props {
 
 export default function BarcodeScanner({ onScan, onError }: Props) {
   const { t } = useTranslation();
-  const scannerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState<"init" | "scanning" | "needs-gesture" | "error">("init");
-  const html5QrCodeRef = useRef<import("html5-qrcode").Html5Qrcode | null>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
   const stoppedRef = useRef(false);
   const onScanRef = useRef(onScan);
   const onErrorRef = useRef(onError);
@@ -23,7 +24,7 @@ export default function BarcodeScanner({ onScan, onError }: Props) {
   tRef.current = t;
 
   const startScanner = useCallback(async () => {
-    if (!scannerRef.current) return;
+    if (!videoRef.current) return;
 
     // Check if camera API is available
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -33,30 +34,50 @@ export default function BarcodeScanner({ onScan, onError }: Props) {
     }
 
     try {
-      const { Html5Qrcode } = await import("html5-qrcode");
+      const { BrowserMultiFormatReader } = await import("@zxing/browser");
       if (stoppedRef.current) return;
 
-      const scanner = new Html5Qrcode("barcode-reader");
-      html5QrCodeRef.current = scanner;
+      const reader = new BrowserMultiFormatReader();
 
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
-        (decodedText) => {
-          const cleaned = decodedText.replace(/[^0-9X]/gi, "");
+      const controls = await reader.decodeFromConstraints(
+        { video: { facingMode: "environment" } },
+        videoRef.current,
+        (result, error) => {
+          if (error) {
+            // NotFoundException fires on every frame without a barcode — expected, not a real error
+            // Only log unexpected errors in dev to aid debugging
+            if (process.env.NODE_ENV === "development") {
+              const name = (error as { name?: string }).name ?? "";
+              if (name !== "NotFoundException") {
+                console.debug("[BarcodeScanner] decode error:", error);
+              }
+            }
+            return;
+          }
+          if (!result) return;
+
+          const cleaned = result.getText().replace(/[^0-9X]/gi, "");
           if (cleaned.length === 10 || cleaned.length === 13) {
             if (stoppedRef.current) return;
             stoppedRef.current = true;
-            scanner.stop()
-              .then(() => onScanRef.current(cleaned))
-              .catch(() => onScanRef.current(cleaned));
+            controlsRef.current?.stop();
+            onScanRef.current(cleaned);
           }
-        },
-        () => {}
+        }
       );
+
+      if (stoppedRef.current) {
+        controls.stop();
+        return;
+      }
+
+      controlsRef.current = controls;
       setStatus("scanning");
-    } catch {
+    } catch (err) {
       // Camera failed — could be PWA needing user gesture, or denied permission
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[BarcodeScanner] startScanner failed:", err);
+      }
       setStatus("needs-gesture");
     }
   }, []);
@@ -67,8 +88,15 @@ export default function BarcodeScanner({ onScan, onError }: Props) {
 
     return () => {
       stoppedRef.current = true;
-      if (html5QrCodeRef.current) {
-        try { html5QrCodeRef.current.stop().catch(() => {}); } catch {}
+      if (controlsRef.current) {
+        try {
+          controlsRef.current.stop();
+        } catch (err) {
+          if (process.env.NODE_ENV === "development") {
+            console.debug("[BarcodeScanner] stop error on cleanup:", err);
+          }
+        }
+        controlsRef.current = null;
       }
     };
   }, [startScanner]);
@@ -76,19 +104,28 @@ export default function BarcodeScanner({ onScan, onError }: Props) {
   async function handleManualStart() {
     setStatus("init");
     // Clean up previous failed scanner instance
-    if (html5QrCodeRef.current) {
-      try { await html5QrCodeRef.current.stop().catch(() => {}); } catch {}
-      html5QrCodeRef.current = null;
+    if (controlsRef.current) {
+      try {
+        controlsRef.current.stop();
+      } catch (err) {
+        if (process.env.NODE_ENV === "development") {
+          console.debug("[BarcodeScanner] stop error on manual restart:", err);
+        }
+      }
+      controlsRef.current = null;
     }
     stoppedRef.current = false;
 
     try {
       // Request camera with user gesture first
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-      // Permission granted — stop this stream and let html5-qrcode take over
-      stream.getTracks().forEach((t) => t.stop());
+      // Permission granted — stop this stream and let @zxing/browser take over
+      stream.getTracks().forEach((track) => track.stop());
       await startScanner();
-    } catch {
+    } catch (err) {
+      if (process.env.NODE_ENV === "development") {
+        console.debug("[BarcodeScanner] handleManualStart failed:", err);
+      }
       setStatus("error");
       onErrorRef.current?.(tRef.current("scanner_accessError"));
     }
@@ -96,10 +133,12 @@ export default function BarcodeScanner({ onScan, onError }: Props) {
 
   return (
     <div className="relative">
-      <div
-        id="barcode-reader"
-        ref={scannerRef}
+      <video
+        ref={videoRef}
         className="w-full rounded-xl overflow-hidden bg-black"
+        style={{ display: status === "scanning" ? "block" : "none" }}
+        muted
+        playsInline
       />
       {status === "init" && (
         <div className="flex items-center justify-center h-48 bg-cream rounded-xl">
