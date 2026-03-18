@@ -34,7 +34,6 @@ export default function SettingsPage() {
     if (!email.trim()) return;
     setAuthState("sending");
     const { error } = await signInWithOtp(email.trim());
-    if (error) console.error("[auth] OTP send error:", error);
     setAuthState(error ? "idle" : "sent");
   }
 
@@ -44,7 +43,6 @@ export default function SettingsPage() {
     setAuthState("verifying");
     const { error } = await verifyOtpCode(email.trim(), otpCode);
     if (error) {
-      console.error("[auth] OTP verify error:", error);
       setAuthState("verify_error");
     }
     // On success, onAuthStateChange in AuthProvider handles the rest
@@ -54,7 +52,6 @@ export default function SettingsPage() {
     setOtpCode("");
     setAuthState("sending");
     signInWithOtp(email.trim()).then(({ error }) => {
-      if (error) console.error("[auth] OTP resend error:", error);
       setAuthState(error ? "verify_error" : "sent");
     });
   }

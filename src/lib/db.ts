@@ -55,16 +55,4 @@ class TsundokuDB extends Dexie {
   }
 }
 
-let dbInstance: TsundokuDB | null = null;
-
-export function getDB(): TsundokuDB {
-  if (typeof window === "undefined") {
-    throw new Error("Database can only be accessed in the browser");
-  }
-  if (!dbInstance) {
-    dbInstance = new TsundokuDB();
-  }
-  return dbInstance;
-}
-
 export const db = typeof window !== "undefined" ? new TsundokuDB() : (null as unknown as TsundokuDB);
