@@ -6,6 +6,7 @@ description: "Bibliothèque personnelle en Kanban — wishlist, pile à lire, lu
 audience: public
 visibility: public
 status: production
+surface_type: flagship
 
 url: https://my-tsundoku.app
 domain: my-tsundoku.app
