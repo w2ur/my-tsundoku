@@ -8,6 +8,7 @@ const book = (title: string, author: string): Book => ({
   author,
   coverUrl: "",
   stage: "tsundoku",
+  position: 0,
   createdAt: 0,
   updatedAt: 0,
 });
