@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import { PreferencesProvider } from "@/lib/preferences";
 import { AuthProvider } from "@/lib/auth";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import { LANDING } from "@/lib/landing";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -20,16 +21,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.my-tsundoku.app"),
   title: "My Tsundoku",
-  description: "Your personal book collection, beautifully organized",
+  description: LANDING.fr.metaDescription,
   alternates: {
     canonical: "/",
+    languages: { fr: "/", en: "/en", "x-default": "/" },
   },
   icons: {
     apple: "/icons/apple-touch-icon.png",
   },
   openGraph: {
     title: "My Tsundoku",
-    description: "Your personal book collection, beautifully organized",
+    description: LANDING.fr.metaDescription,
     url: "https://www.my-tsundoku.app",
     images: [
       {
