@@ -22,7 +22,7 @@ export default function LandingSection({ locale }: LandingSectionProps) {
     <section lang={locale} className="bg-paper text-ink px-6 py-16">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <div className="max-w-2xl mx-auto space-y-12">
         <header className="text-center space-y-4">
@@ -40,7 +40,7 @@ export default function LandingSection({ locale }: LandingSectionProps) {
         <p className="text-center">
           <Link
             href="/add"
-            className="inline-block bg-forest text-cream px-6 py-3 rounded-full text-sm hover:opacity-90 transition-opacity"
+            className="inline-block bg-forest text-paper font-medium px-6 py-3 rounded-full text-sm hover:bg-forest/90 transition-colors"
           >
             {content.ctaLabel}
           </Link>

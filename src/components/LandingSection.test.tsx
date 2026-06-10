@@ -26,6 +26,7 @@ describe("LandingSection", () => {
     expect(data["@type"]).toBe("SoftwareApplication");
     expect(data.name).toBe("My Tsundoku");
     expect(data.offers.price).toBe("0");
+    expect(script!.textContent).not.toContain("</script>");
   });
 
   it("links the CTA to /add", () => {
