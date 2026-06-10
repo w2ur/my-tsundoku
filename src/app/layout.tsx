@@ -18,18 +18,22 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.my-tsundoku.app"),
   title: "My Tsundoku",
   description: "Your personal book collection, beautifully organized",
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     apple: "/icons/apple-touch-icon.png",
   },
   openGraph: {
     title: "My Tsundoku",
     description: "Your personal book collection, beautifully organized",
-    url: "https://my-tsundoku.app",
+    url: "https://www.my-tsundoku.app",
     images: [
       {
-        url: "https://my-tsundoku.app/og-image.png",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
       },
