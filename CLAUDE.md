@@ -41,7 +41,7 @@ Environment variables (see `.env.example`):
 - `src/lib/i18n/` — translation dictionaries (fr.ts canonical, en.ts), locale types, plural helper
 - `src/hooks/` — useBooks, useBook, useBooksByStage (Dexie live queries), useIsMobile
 - `src/components/` — reusable UI components
-- `src/app/` — routes: `/`, `/add/`, `/add/scan`, `/add/manual`, `/book/[id]`, `/settings`, `/~offline`
+- `src/app/` — routes: `/`, `/en`, `/add/`, `/add/scan`, `/add/manual`, `/book/[id]`, `/settings`, `/~offline`
 - `src/app/sw.ts` — service worker (excluded from tsconfig, compiled by Serwist CLI)
 - `supabase/migrations/` — SQL migration files for Supabase schema
 

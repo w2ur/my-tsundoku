@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.1.0",
+    date: "2026-06-11",
+    changes: {
+      fr: [
+        "Page de découverte pour les nouveaux visiteurs sur la page d'accueil, et version anglaise sur /en",
+      ],
+      en: [
+        "Discovery page for new visitors on the homepage, plus an English version at /en",
+      ],
+    },
+  },
+  {
     version: "2.0.1",
     date: "2026-03-03",
     changes: {
