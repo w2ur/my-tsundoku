@@ -14,6 +14,8 @@ export default function ManualAddPage() {
   const searchParams = useSearchParams();
   const stage = searchParams.get("stage") || "tsundoku";
   const isbnParam = searchParams.get("isbn") || undefined;
+  const titleParam = searchParams.get("title") || undefined;
+  const storeUrlParam = searchParams.get("storeUrl") || undefined;
   const [pending, setPending] = useState<BookFormData | null>(null);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
@@ -42,7 +44,15 @@ export default function ManualAddPage() {
             loading={loading}
           />
         ) : (
-          <BookForm onSubmit={setPending} submitLabel={t("form_preview")} initial={isbnParam ? { isbn: isbnParam } : undefined} />
+          <BookForm
+            onSubmit={setPending}
+            submitLabel={t("form_preview")}
+            initial={{
+              ...(isbnParam && { isbn: isbnParam }),
+              ...(titleParam && { title: titleParam }),
+              ...(storeUrlParam && { storeUrl: storeUrlParam }),
+            }}
+          />
         )}
       </main>
     </div>

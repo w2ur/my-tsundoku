@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.2.0",
+    date: "2026-06-21",
+    changes: {
+      fr: [
+        "Les photos de couverture rognées sont maintenant enregistrées dans le cloud (au lieu de grossir la base locale)",
+        "Partagez un lien ou un titre depuis une autre app pour l'ajouter directement à votre Tsundoku",
+        "Notification quand une mise à jour de l'application est disponible",
+      ],
+      en: [
+        "Cropped cover photos are now stored in the cloud (instead of bloating local storage)",
+        "Share a link or title from another app to add it directly to your Tsundoku",
+        "Notification when an app update is available",
+      ],
+    },
+  },
+  {
     version: "2.1.0",
     date: "2026-06-11",
     changes: {
