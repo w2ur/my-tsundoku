@@ -164,6 +164,8 @@ const en: Record<TranslationKeys, string> = {
   account_deleting: "Deleting...",
   account_deleteError: "Error deleting account. Try again.",
   settings_cloudBackupNote: "Your books are automatically backed up to the cloud.",
+  sw_updateAvailable: "Update available",
+  sw_updateReload: "Reload",
 };
 
 export default en;

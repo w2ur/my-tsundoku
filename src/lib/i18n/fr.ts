@@ -164,6 +164,8 @@ const fr = {
   account_deleting: "Suppression...",
   account_deleteError: "Erreur lors de la suppression. Réessayez.",
   settings_cloudBackupNote: "Vos livres sont automatiquement sauvegardés dans le cloud.",
+  sw_updateAvailable: "Mise à jour disponible",
+  sw_updateReload: "Recharger",
 } as const;
 
 export default fr;
