@@ -1,9 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import { searchBooks, type OpenLibraryResult } from "@/lib/open-library";
 import { searchCommunityBooks, deduplicateResults, type CommunityBook } from "@/lib/community-search";
 import { useTranslation } from "@/lib/preferences";
+import { useAuth } from "@/lib/auth";
+import { resolveCoverUrl } from "@/lib/covers";
 import GeneratedCover from "@/components/GeneratedCover";
 import CoverCrop from "@/components/CoverCrop";
 
@@ -25,6 +28,7 @@ interface Props {
 
 export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [author, setAuthor] = useState(initial?.author ?? "");
   const [coverUrl, setCoverUrl] = useState(initial?.coverUrl ?? "");
@@ -37,6 +41,7 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
   const [searchLoading, setSearchLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [coverUploading, setCoverUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -50,9 +55,15 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
     reader.readAsDataURL(file);
   }
 
-  function handleCropComplete(croppedDataUrl: string) {
-    setCoverUrl(croppedDataUrl);
+  async function handleCropComplete(croppedDataUrl: string) {
     setCropSrc(null);
+    setCoverUploading(true);
+    try {
+      const resolved = await resolveCoverUrl(croppedDataUrl, user?.id ?? null, uuidv4());
+      setCoverUrl(resolved);
+    } finally {
+      setCoverUploading(false);
+    }
   }
 
   async function handleSearch() {
@@ -308,10 +319,10 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
 
       <button
         type="submit"
-        disabled={!title.trim()}
+        disabled={!title.trim() || coverUploading}
         className="w-full py-3 bg-forest text-paper rounded-lg font-medium text-sm hover:bg-forest/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
-        {submitLabel ?? t("form_add")}
+        {coverUploading ? "..." : (submitLabel ?? t("form_add"))}
       </button>
     </form>
     </>
