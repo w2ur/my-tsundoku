@@ -63,3 +63,10 @@ next-env.d.ts
 # serwist
 public/sw.js
 public/sw.js.map
+
+# playwright MCP
+.playwright-mcp/
+
+# audit/readiness reports (not committed)
+readiness-report.md
+audit-report-*.md
