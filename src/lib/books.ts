@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { db } from "./db";
 import { enqueueUpsert, enqueueDelete } from "./sync";
+import { requestStoragePersistOnce } from "./storage-persist";
 import type { Book, Stage } from "./types";
 
 export async function addBook(
@@ -38,6 +39,8 @@ export async function addBook(
   };
   await db.books.add(book);
   enqueueUpsert(book);
+  // Fire-and-forget: request persistent storage after the first book is added
+  requestStoragePersistOnce();
   return book;
 }
 

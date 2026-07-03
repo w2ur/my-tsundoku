@@ -166,6 +166,8 @@ const fr = {
   settings_cloudBackupNote: "Vos livres sont automatiquement sauvegardés dans le cloud.",
   sw_updateAvailable: "Mise à jour disponible",
   sw_updateReload: "Recharger",
+  persist_nudge: "Stockage non persistant : Safari peut effacer vos livres après 7 jours. Exportez une sauvegarde ou connectez-vous pour les protéger.",
+  persist_nudge_dismiss: "Compris",
 } as const;
 
 export default fr;

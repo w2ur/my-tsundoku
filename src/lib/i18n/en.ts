@@ -166,6 +166,8 @@ const en: Record<TranslationKeys, string> = {
   settings_cloudBackupNote: "Your books are automatically backed up to the cloud.",
   sw_updateAvailable: "Update available",
   sw_updateReload: "Reload",
+  persist_nudge: "Storage not persistent: Safari may clear your books after 7 days. Export a backup or sign in to protect them.",
+  persist_nudge_dismiss: "Got it",
 };
 
 export default en;

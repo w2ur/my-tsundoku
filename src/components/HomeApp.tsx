@@ -4,6 +4,7 @@ import { useState } from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import KanbanBoard from "@/components/KanbanBoard";
+import StoragePersistNudge from "@/components/StoragePersistNudge";
 import WelcomeGuide from "@/components/WelcomeGuide";
 
 export default function HomeApp() {
@@ -19,6 +20,7 @@ export default function HomeApp() {
         isSearchOpen={isSearchOpen}
         onSearchOpenChange={setIsSearchOpen}
       />
+      <StoragePersistNudge />
       <main className="flex-1 min-h-0">
         <KanbanBoard
           searchQuery={searchQuery}
