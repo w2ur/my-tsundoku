@@ -32,7 +32,6 @@ import StageTabs from "./StageTabs";
 import AddButton from "./AddButton";
 import BookCard from "./BookCard";
 import SortableBookCard from "./SortableBookCard";
-import SwipeableBookCard from "./SwipeableBookCard";
 import EmptyState from "./EmptyState";
 
 interface KanbanBoardProps {
@@ -66,11 +65,13 @@ export default function KanbanBoard({
   const { t, locale } = useTranslation();
   const [activeTab, setActiveTabState] = useState<Stage>("tsundoku");
 
-  // Initialize from URL on mount (client-side only, avoids SSR mismatch)
+  // Initialize from URL on mount (client-side only — window.location is unavailable
+  // during SSR so we cannot use a useState lazy initializer here).
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const stage = params.get("stage");
     if (STAGES.includes(stage as Stage)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveTabState(stage as Stage);
     }
   }, []);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import Image from "next/image";
@@ -22,14 +22,24 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [showUnmarkPrompt, setShowUnmarkPrompt] = useState(false);
-  const originalCoverRef = useRef<string | null>(null);
+  // Capture the first non-empty coverUrl we see (before any cover toggle).
+  // Stored as state so it is never read from a ref during render.
+  const [originalCover, setOriginalCover] = useState<string | null>(null);
+  const originalCoverCaptured = useRef(false);
   const { t } = useTranslation();
 
-  // Capture the first non-empty coverUrl we see (before any toggle)
-  if (book && originalCoverRef.current === null && book.coverUrl) {
-    originalCoverRef.current = book.coverUrl;
-  }
-  const savedOriginal = originalCoverRef.current ?? "";
+  // Capture the first non-null coverUrl from the live query — needed to
+  // restore the original cover after a toggle. window.location / IndexedDB
+  // are unavailable at SSR, so a lazy useState initializer is not an option.
+  useEffect(() => {
+    if (book?.coverUrl && !originalCoverCaptured.current) {
+      originalCoverCaptured.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOriginalCover(book.coverUrl);
+    }
+  }, [book?.coverUrl]);
+
+  const savedOriginal = originalCover ?? "";
   // Can toggle if there's a saved original cover (even if current is "")
   const canToggleCover = Boolean(savedOriginal);
 

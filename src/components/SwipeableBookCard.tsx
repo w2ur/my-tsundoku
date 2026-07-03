@@ -25,6 +25,9 @@ let activePeekingDismiss: (() => void) | null = null;
 
 export default function SwipeableBookCard({ book }: { book: Book }) {
   const [phase, setPhase] = useState<SwipePhase>("idle");
+  // swipeDirection is state (not just a ref) so JSX can read it safely during render.
+  // swipeDirectionRef mirrors it for synchronous reads inside event handlers.
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
   const x = useMotionValue(0);
   const { t } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -53,6 +56,7 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
   const dismissToIdle = useCallback(() => {
     setPhase("idle");
     swipeDirectionRef.current = null;
+    setSwipeDirection(null);
     crossedRevealRef.current = false;
     crossedConfirmRef.current = false;
     baseOffsetRef.current = 0;
@@ -82,6 +86,7 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
       x.jump(0);
       setPhase("idle");
       swipeDirectionRef.current = null;
+      setSwipeDirection(null);
       crossedRevealRef.current = false;
       crossedConfirmRef.current = false;
       activePeekingDismiss = null;
@@ -132,6 +137,7 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
         if (direction === "right" && !canSwipeRight) return;
         if (direction === "left" && !canSwipeLeft) return;
         swipeDirectionRef.current = direction;
+        setSwipeDirection(direction);
         setPhase("dragging");
       }
 
@@ -205,11 +211,11 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
     }
   }, [phase, dismissToIdle]);
 
-  // Determine which stage to show in the action area
+  // Determine which stage to show in the action area (read from state, not ref)
   const visibleTarget =
-    swipeDirectionRef.current === "right"
+    swipeDirection === "right"
       ? nextStage
-      : swipeDirectionRef.current === "left"
+      : swipeDirection === "left"
         ? prevStage
         : null;
 
@@ -219,7 +225,7 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
       {visibleTarget && (phase === "dragging" || phase === "peeking") && (
         <motion.div
           className={`absolute inset-0 flex items-center rounded-xl ${STAGE_CONFIG[visibleTarget].bgColor} ${
-            swipeDirectionRef.current === "right" ? "justify-start pl-4" : "justify-end pr-4"
+            swipeDirection === "right" ? "justify-start pl-4" : "justify-end pr-4"
           }`}
           style={{ opacity: actionOpacity }}
           onTap={handleActionTap}
@@ -237,7 +243,7 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
               strokeLinejoin="round"
               className={STAGE_CONFIG[visibleTarget].color}
             >
-              {swipeDirectionRef.current === "right" ? (
+              {swipeDirection === "right" ? (
                 <>
                   <line x1="5" y1="12" x2="19" y2="12" />
                   <polyline points="12 5 19 12 12 19" />
