@@ -669,6 +669,42 @@ describe("pullRemoteChanges", () => {
     expect(new Date(cursor).getTime()).not.toBeNaN();
   });
 
+  it("sets cursor to max(updated_at) minus 30 s to absorb clock skew", async () => {
+    // Regression: cursor was set to client now(), so changes from devices with
+    // a clock slightly ahead were permanently skipped on the next pull.
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const earlierRow = {
+      id: "book-a",
+      title: "Earlier",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:00:00.000Z",
+      updated_at: "2023-11-14T22:00:00.000Z",
+      deleted_at: null,
+    };
+    const laterRow = {
+      ...earlierRow,
+      id: "book-b",
+      title: "Later",
+      updated_at: "2023-11-14T23:00:00.000Z",
+    };
+    const chain = mockChain({ data: [earlierRow, laterRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValue(undefined);
+
+    await pullRemoteChanges();
+
+    const cursor = storage["tsundoku_last_synced_u1"];
+    expect(cursor).toBeTruthy();
+    // max(updated_at) = 23:00:00 → cursor = 23:00:00 - 30 s = 22:59:30
+    const maxUpdatedAt = new Date("2023-11-14T23:00:00.000Z").getTime();
+    const expectedCursor = new Date(maxUpdatedAt - 30_000).toISOString();
+    expect(cursor).toBe(expectedCursor);
+  });
+
   it("does not advance cursor when a Dexie write fails", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 

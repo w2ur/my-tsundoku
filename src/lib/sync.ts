@@ -178,9 +178,30 @@ function getLocalSyncCursor(userId: string): string | null {
   }
 }
 
-function setLocalSyncCursor(userId: string): void {
+// Overlap window to subtract from max(updated_at) when setting the pull cursor.
+// Absorbs cross-device clock skew so changes written just-before our pull are
+// caught on the next pull. The local-vs-remote merge is idempotent, so re-pulling
+// overlapping rows is safe.
+const CURSOR_OVERLAP_MS = 30_000; // 30 seconds
+
+function setLocalSyncCursor(
+  userId: string,
+  remoteRows: Array<Record<string, unknown>>
+): void {
   try {
-    localStorage.setItem(`tsundoku_last_synced_${userId}`, new Date().toISOString());
+    let cursor: string;
+    if (remoteRows.length > 0) {
+      const maxUpdatedAt = Math.max(
+        ...remoteRows.map((r) =>
+          r.updated_at ? new Date(r.updated_at as string).getTime() : 0
+        )
+      );
+      cursor = new Date(Math.max(0, maxUpdatedAt - CURSOR_OVERLAP_MS)).toISOString();
+    } else {
+      // No rows returned — safe to advance cursor to now (nothing was missed)
+      cursor = new Date().toISOString();
+    }
+    localStorage.setItem(`tsundoku_last_synced_${userId}`, cursor);
   } catch {
     // localStorage unavailable
   }
@@ -241,7 +262,7 @@ export async function pullRemoteChanges(): Promise<void> {
 
     // Only advance cursor if all writes succeeded — otherwise retry on next pull
     if (allSucceeded) {
-      setLocalSyncCursor(userId);
+      setLocalSyncCursor(userId, remoteRows);
 
       await supabase.from("sync_metadata").upsert({
         user_id: userId,
