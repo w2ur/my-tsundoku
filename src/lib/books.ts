@@ -93,9 +93,16 @@ export async function importBooks(
 ): Promise<void> {
   const booksWithPosition = ensurePositions(books);
   if (mode === "replace") {
+    const existing = await db.books.toArray();
+    for (const book of existing) {
+      enqueueDelete(book.id);
+    }
     await db.books.clear();
   }
   await db.books.bulkPut(booksWithPosition);
+  for (const book of booksWithPosition) {
+    enqueueUpsert(book);
+  }
 }
 
 export function computeReorder(

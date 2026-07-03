@@ -58,6 +58,7 @@ function makeBook(overrides: Partial<Book> & { id: string; stage: Book["stage"];
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockToArray.mockResolvedValue([]);
   mockWhereToArray.mockResolvedValue([]);
   mockEnqueueUpsert.mockResolvedValue(undefined);
   mockEnqueueDelete.mockResolvedValue(undefined);
@@ -202,6 +203,44 @@ describe("importBooks", () => {
     expect(mockClear).not.toHaveBeenCalled();
     // books already have positions, ensurePositions passes them through unchanged
     expect(mockBulkPut).toHaveBeenCalledWith(mockBooks);
+  });
+
+  // Regression: importBooks did not enqueue any sync ops, causing imported books
+  // to never reach Supabase and cleared books to resurrect on other devices.
+  it("enqueues upserts for all imported books in merge mode, no deletes", async () => {
+    const booksToImport: Book[] = [
+      { id: "import-1", title: "A", author: "X", coverUrl: "", stage: "tsundoku", position: 0, createdAt: 1000, updatedAt: 1000 },
+      { id: "import-2", title: "B", author: "X", coverUrl: "", stage: "tsundoku", position: 1, createdAt: 1000, updatedAt: 1000 },
+    ];
+    mockBulkPut.mockResolvedValue(undefined);
+
+    await importBooks(booksToImport, "merge");
+
+    expect(mockEnqueueDelete).not.toHaveBeenCalled();
+    expect(mockEnqueueUpsert).toHaveBeenCalledTimes(2);
+    expect(mockEnqueueUpsert).toHaveBeenCalledWith(booksToImport[0]);
+    expect(mockEnqueueUpsert).toHaveBeenCalledWith(booksToImport[1]);
+  });
+
+  it("enqueues deletes for pre-existing books and upserts for imported books in replace mode", async () => {
+    const preExisting: Book[] = [
+      { id: "old-1", title: "Old A", author: "X", coverUrl: "", stage: "tsundoku", position: 0, createdAt: 500, updatedAt: 500 },
+      { id: "old-2", title: "Old B", author: "X", coverUrl: "", stage: "bibliotheque", position: 0, createdAt: 500, updatedAt: 500 },
+    ];
+    const booksToImport: Book[] = [
+      { id: "import-1", title: "New A", author: "X", coverUrl: "", stage: "tsundoku", position: 0, createdAt: 1000, updatedAt: 1000 },
+    ];
+    mockToArray.mockResolvedValue(preExisting);
+    mockClear.mockResolvedValue(undefined);
+    mockBulkPut.mockResolvedValue(undefined);
+
+    await importBooks(booksToImport, "replace");
+
+    expect(mockEnqueueDelete).toHaveBeenCalledTimes(2);
+    expect(mockEnqueueDelete).toHaveBeenCalledWith("old-1");
+    expect(mockEnqueueDelete).toHaveBeenCalledWith("old-2");
+    expect(mockEnqueueUpsert).toHaveBeenCalledTimes(1);
+    expect(mockEnqueueUpsert).toHaveBeenCalledWith(booksToImport[0]);
   });
 });
 
