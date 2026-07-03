@@ -83,8 +83,12 @@ export function ensurePositions(books: Book[]): Book[] {
   const result: Book[] = [];
   for (const stageBooks of Object.values(byStage)) {
     stageBooks.sort((a, b) => b.updatedAt - a.updatedAt);
+    // If any book in the stage lacks a position, renumber the whole stage from
+    // 0 so that we never assign the same index to two books (e.g. an existing
+    // position=1 colliding with a null book that receives i=1).
+    const stageHasNull = stageBooks.some((b) => b.position == null);
     stageBooks.forEach((book, i) => {
-      result.push({ ...book, position: book.position ?? i });
+      result.push({ ...book, position: stageHasNull ? i : book.position });
     });
   }
   return result;

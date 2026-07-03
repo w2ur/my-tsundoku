@@ -269,6 +269,19 @@ describe("ensurePositions", () => {
     expect(result.find(b => b.id === "a")!.position).toBe(5);
     expect(result.find(b => b.id === "b")!.position).toBe(3);
   });
+
+  // Regression: book.position ?? i collided when a stage had a book with
+  // position=1 alongside a null-position book that received i=1 from the loop.
+  it("emits unique positions per stage when some books lack positions", () => {
+    const books = [
+      makeBook({ id: "a", stage: "tsundoku", position: 1 }),
+      { id: "b", stage: "tsundoku" as const, title: "B", author: "X", coverUrl: "", createdAt: 1000, updatedAt: 2000 } as Book,
+      { id: "c", stage: "tsundoku" as const, title: "C", author: "X", coverUrl: "", createdAt: 1000, updatedAt: 3000 } as Book,
+    ];
+    const result = ensurePositions(books);
+    const positions = result.map((b) => b.position);
+    expect(new Set(positions).size).toBe(positions.length);
+  });
 });
 
 describe("computeReorder", () => {
