@@ -11,9 +11,9 @@ Tsundoku is a PWA for organizing personal book collections using a Kanban-style 
 - **Database**: Dexie.js (IndexedDB) — local-first, all data stored client-side
 - **Cloud**: Supabase (Auth, Postgres, Storage) — OTP code auth, cloud sync, community catalog
 - **PWA**: Serwist (configurator mode) — `serwist.config.js` + `serwist build` post-step
-- **Drag & Drop**: @dnd-kit/core + @dnd-kit/sortable (stable v5/v6)
+- **Drag & Drop**: @dnd-kit/core ^6.3.1 + @dnd-kit/sortable ^10.0.0
 - **Animations**: motion
-- **Barcode Scanning**: html5-qrcode
+- **Barcode Scanning**: @zxing/browser
 - **Image Cropping**: react-image-crop
 - **Testing**: Vitest + @testing-library/react
 
@@ -41,7 +41,7 @@ Environment variables (see `.env.example`):
 - `src/lib/i18n/` — translation dictionaries (fr.ts canonical, en.ts), locale types, plural helper
 - `src/hooks/` — useBooks, useBook, useBooksByStage (Dexie live queries), useIsMobile
 - `src/components/` — reusable UI components
-- `src/app/` — routes: `/`, `/en`, `/add/`, `/add/scan`, `/add/manual`, `/book/[id]`, `/settings`, `/~offline`
+- `src/app/` — routes: `/`, `/en`, `/add/`, `/add/scan`, `/add/manual`, `/book/[id]`, `/settings`, `/~offline`, `/share-target`
 - `src/app/sw.ts` — service worker (excluded from tsconfig, compiled by Serwist CLI)
 - `supabase/migrations/` — SQL migration files for Supabase schema
 

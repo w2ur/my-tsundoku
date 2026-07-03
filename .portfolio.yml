@@ -8,7 +8,7 @@ visibility: public
 status: production
 surface_type: flagship
 
-url: https://my-tsundoku.app
+url: https://www.my-tsundoku.app
 domain: my-tsundoku.app
 deploy: vercel
 
@@ -26,6 +26,8 @@ stack:
   - TypeScript
   - Tailwind
   - Dexie.js
+  - Supabase
+  - Serwist
 
 repo_public: true
 license: AGPL-3.0
