@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.2.1",
+    date: "2026-07-26",
+    changes: {
+      fr: [
+        "Correction : la suppression d'un livre sur un appareil ne pouvait plus écraser une modification plus récente faite sur un autre appareil",
+      ],
+      en: [
+        "Fix: deleting a book on one device could no longer overwrite a more recent edit made on another device",
+      ],
+    },
+  },
+  {
     version: "2.2.0",
     date: "2026-06-21",
     changes: {

@@ -245,13 +245,23 @@ export async function pullRemoteChanges(): Promise<void> {
     for (const row of remoteRows) {
       try {
         const remoteBook = mapSupabaseToBook(row);
+        const localBook = await db.books.get(remoteBook.id);
 
         if (remoteBook.deletedAt) {
-          await db.books.delete(remoteBook.id);
+          // Compare against deletedAt, not updatedAt: rows soft-deleted before the
+          // updated_at stamping fix carry a stale updated_at, so deletedAt is the
+          // only accurate record of when the delete happened. Tie-break: a local
+          // edit strictly newer than the delete wins; equal timestamps let the
+          // delete win. When the local edit wins, re-push it so the remote row is
+          // resurrected instead of silently dropping the divergence.
+          if (!localBook || remoteBook.deletedAt >= localBook.updatedAt) {
+            await db.books.delete(remoteBook.id);
+          } else {
+            await enqueueUpsert(localBook);
+          }
           continue;
         }
 
-        const localBook = await db.books.get(remoteBook.id);
         if (!localBook || remoteBook.updatedAt > localBook.updatedAt) {
           await db.books.put(remoteBook);
         }

@@ -675,6 +675,93 @@ describe("pullRemoteChanges", () => {
     expect(mockDb.books.put).not.toHaveBeenCalled();
   });
 
+  it("does not apply a remote delete when the local edit is strictly newer, and re-pushes it", async () => {
+    // Regression: <SHA> — remote soft-delete was applied without comparing updatedAt,
+    // destroying a newer local edit
+    mockSupabase.auth.getSession.mockResolvedValue(mockSession());
+    const remoteRow = {
+      id: "b1",
+      title: "Deleted Book",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      updated_at: "2023-11-14T22:30:00.000Z",
+      deleted_at: "2023-11-14T22:30:00.000Z", // T1
+    };
+    const localBook = {
+      ...testBook,
+      updatedAt: new Date("2023-11-15T00:00:00.000Z").getTime(), // T2 > T1
+    };
+    const chain = mockChain({ data: [remoteRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce(localBook);
+
+    await pullRemoteChanges();
+
+    expect(mockDb.books.delete).not.toHaveBeenCalled();
+    expect(mockDb.books.put).not.toHaveBeenCalled();
+    expect(mockDb.sync_queue.add).toHaveBeenCalledWith(
+      expect.objectContaining({ bookId: "b1", operation: "upsert", payload: localBook }),
+    );
+  });
+
+  it("applies a remote delete when it is newer than the local edit", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const remoteRow = {
+      id: "b1",
+      title: "Deleted Book",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      updated_at: "2023-11-15T00:00:00.000Z",
+      deleted_at: "2023-11-15T00:00:00.000Z", // T2
+    };
+    const localBook = {
+      ...testBook,
+      updatedAt: new Date("2023-11-14T22:30:00.000Z").getTime(), // T1 < T2
+    };
+    const chain = mockChain({ data: [remoteRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce(localBook);
+
+    await pullRemoteChanges();
+
+    expect(mockDb.books.delete).toHaveBeenCalledWith("b1");
+    expect(mockDb.books.put).not.toHaveBeenCalled();
+  });
+
+  it("applies a remote delete when timestamps are equal (tie-break favours the delete)", async () => {
+    const tie = "2023-11-14T22:30:00.000Z";
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const remoteRow = {
+      id: "b1",
+      title: "Deleted Book",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      updated_at: tie,
+      deleted_at: tie,
+    };
+    const localBook = { ...testBook, updatedAt: new Date(tie).getTime() };
+    const chain = mockChain({ data: [remoteRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce(localBook);
+
+    await pullRemoteChanges();
+
+    expect(mockDb.books.delete).toHaveBeenCalledWith("b1");
+    expect(mockDb.books.put).not.toHaveBeenCalled();
+  });
+
   it("sets localStorage cursor after successful pull", async () => {
     mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
     const chain = mockChain({ data: [], error: null });
