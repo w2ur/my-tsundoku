@@ -383,6 +383,24 @@ describe("flushQueue", () => {
     expect(mockDb.sync_queue.delete).toHaveBeenCalledWith(2);
   });
 
+  it("processes delete: update payload sets updated_at to the same value as deleted_at", async () => {
+    // Regression: <SHA> — soft-delete only stamped deleted_at, leaving updated_at
+    // stale, so the incremental pull query (gt("updated_at", cursor)) never
+    // surfaced the tombstone to other devices.
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 2, bookId: "b1", operation: "delete", payload: { id: "b1" }, createdAt: Date.now() },
+    ]);
+    const chain = mockChain({ error: null });
+    mockSupabase.from.mockReturnValue(chain);
+
+    await flushQueue();
+
+    const updateCall = (chain.update as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(updateCall.deleted_at).toBeTruthy();
+    expect(updateCall.updated_at).toBe(updateCall.deleted_at);
+  });
+
   it("sets status to syncing then synced on success", async () => {
     const statuses: string[] = [];
     const unsub = onSyncStatusChange((s) => statuses.push(s));

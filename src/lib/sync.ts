@@ -127,9 +127,10 @@ export async function flushQueue(): Promise<{ flushed: number; failed: number }>
           const { error } = await supabase.from("books").upsert(row);
           if (error) throw error;
         } else if (entry.operation === "delete") {
+          const now = new Date().toISOString();
           const { error } = await supabase
             .from("books")
-            .update({ deleted_at: new Date().toISOString() })
+            .update({ deleted_at: now, updated_at: now })
             .eq("id", entry.bookId)
             .eq("user_id", userId);
           if (error) throw error;
