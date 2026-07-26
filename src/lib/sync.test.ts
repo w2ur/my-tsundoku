@@ -384,7 +384,7 @@ describe("flushQueue", () => {
   });
 
   it("processes delete: update payload sets updated_at to the same value as deleted_at", async () => {
-    // Regression: <SHA> — soft-delete only stamped deleted_at, leaving updated_at
+    // Regression: d53abf6 — soft-delete only stamped deleted_at, leaving updated_at
     // stale, so the incremental pull query (gt("updated_at", cursor)) never
     // surfaced the tombstone to other devices.
     mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
@@ -676,7 +676,7 @@ describe("pullRemoteChanges", () => {
   });
 
   it("does not apply a remote delete when the local edit is strictly newer, and re-pushes it", async () => {
-    // Regression: <SHA> — remote soft-delete was applied without comparing updatedAt,
+    // Regression: b9d7fe8 — remote soft-delete was applied without comparing updatedAt,
     // destroying a newer local edit
     mockSupabase.auth.getSession.mockResolvedValue(mockSession());
     const remoteRow = {
