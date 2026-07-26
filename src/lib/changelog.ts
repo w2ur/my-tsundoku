@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.2.2",
+    date: "2026-07-26",
+    changes: {
+      fr: [
+        "Correction : les livres supprimés sur un autre appareil avant la dernière mise à jour finissent enfin par disparaître",
+      ],
+      en: [
+        "Fix: books deleted on another device before the last update now finally disappear",
+      ],
+    },
+  },
+  {
     version: "2.2.1",
     date: "2026-07-26",
     changes: {

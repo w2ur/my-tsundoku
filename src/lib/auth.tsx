@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import { supabase } from "./supabase";
 import { db } from "./db";
-import { fullSync, startSyncListeners, flushQueue } from "./sync";
+import { fullSync, startSyncListeners, flushQueue, reconcileLegacyTombstones } from "./sync";
 import type { User } from "@supabase/supabase-js";
 import MigrationPrompt from "@/components/MigrationPrompt";
 
@@ -73,6 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Start sync listeners (online/offline, periodic)
     syncCleanupRef.current?.();
     syncCleanupRef.current = startSyncListeners();
+
+    // One-time reconcile for tombstones left stale by the pre-d53abf6 bug
+    reconcileLegacyTombstones(currentUser.id);
 
     // Check if this is a first sign-in (no sync_metadata for this user)
     const { data: syncMeta } = await supabase

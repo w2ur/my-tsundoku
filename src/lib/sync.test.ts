@@ -37,6 +37,7 @@ import {
   flushQueue,
   pullRemoteChanges,
   startSyncListeners,
+  reconcileLegacyTombstones,
 } from "./sync";
 
 // ---- Helpers ----
@@ -841,6 +842,133 @@ describe("pullRemoteChanges", () => {
     expect(storage["tsundoku_last_synced_u1"]).toBe(originalCursor);
 
     vi.restoreAllMocks();
+  });
+});
+
+// ============================================================
+// reconcileLegacyTombstones
+// ============================================================
+
+describe("reconcileLegacyTombstones", () => {
+  const storage: Record<string, string> = {};
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Mock localStorage (jsdom may not support .clear())
+    for (const key of Object.keys(storage)) delete storage[key];
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => storage[key] ?? null,
+      setItem: (key: string, value: string) => { storage[key] = value; },
+      removeItem: (key: string) => { delete storage[key]; },
+    });
+  });
+
+  it("first call removes the existing cursor and sets the reconcile flag", () => {
+    storage["tsundoku_last_synced_u1"] = "2023-11-14T22:30:00.000Z";
+
+    reconcileLegacyTombstones("u1");
+
+    expect(storage["tsundoku_last_synced_u1"]).toBeUndefined();
+    expect(storage["tsundoku_tombstone_reconcile_v1_u1"]).toBeTruthy();
+  });
+
+  it("second call is a no-op: a cursor set after the first call survives", () => {
+    reconcileLegacyTombstones("u1");
+
+    // Simulate a pull that set a fresh cursor after the reconcile
+    storage["tsundoku_last_synced_u1"] = "2023-11-15T00:00:00.000Z";
+
+    reconcileLegacyTombstones("u1");
+
+    expect(storage["tsundoku_last_synced_u1"]).toBe("2023-11-15T00:00:00.000Z");
+  });
+
+  it("reconciling one user does not suppress reconcile for another, nor touch their cursor", () => {
+    storage["tsundoku_last_synced_u2"] = "2023-11-14T22:30:00.000Z";
+
+    reconcileLegacyTombstones("u1");
+
+    expect(storage["tsundoku_tombstone_reconcile_v1_u2"]).toBeUndefined();
+    expect(storage["tsundoku_last_synced_u2"]).toBe("2023-11-14T22:30:00.000Z");
+
+    reconcileLegacyTombstones("u2");
+
+    expect(storage["tsundoku_last_synced_u2"]).toBeUndefined();
+    expect(storage["tsundoku_tombstone_reconcile_v1_u2"]).toBeTruthy();
+  });
+});
+
+// ============================================================
+// Legacy tombstone pull behavior (no cursor, deletedAt < stale updatedAt)
+// ============================================================
+
+describe("pullRemoteChanges: legacy tombstones", () => {
+  const storage: Record<string, string> = {};
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    for (const key of Object.keys(storage)) delete storage[key];
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => storage[key] ?? null,
+      setItem: (key: string, value: string) => { storage[key] = value; },
+      removeItem: (key: string) => { delete storage[key]; },
+    });
+  });
+
+  it("deletes a local record when a legacy tombstone (updated_at older than deleted_at) is pulled with no cursor", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const legacyTombstoneRow = {
+      id: "b1",
+      title: "Deleted Book",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      // Stale: pre-fix soft-delete only stamped deleted_at, so updated_at
+      // stayed at its last edit, strictly before the delete itself.
+      updated_at: "2023-11-14T22:00:00.000Z",
+      deleted_at: "2023-11-14T22:30:00.000Z",
+    };
+    const chain = mockChain({ data: [legacyTombstoneRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce(undefined);
+
+    await pullRemoteChanges();
+
+    expect(chain.gt).not.toHaveBeenCalled(); // no cursor: full re-pull
+    expect(mockDb.books.delete).toHaveBeenCalledWith("b1");
+  });
+
+  it("does not delete a local record whose updatedAt is newer than the legacy tombstone's deletedAt", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const legacyTombstoneRow = {
+      id: "b1",
+      title: "Deleted Book",
+      author: "Author",
+      cover_url: "",
+      stage: "tsundoku",
+      position: 0,
+      is_reading: false,
+      created_at: "2023-11-14T22:13:20.000Z",
+      updated_at: "2023-11-14T22:00:00.000Z",
+      deleted_at: "2023-11-14T22:30:00.000Z", // T2
+    };
+    const localBook = {
+      ...testBook,
+      updatedAt: new Date("2023-11-15T00:00:00.000Z").getTime(), // T3 > T2
+    };
+    const chain = mockChain({ data: [legacyTombstoneRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce(localBook);
+
+    await pullRemoteChanges();
+
+    expect(mockDb.books.delete).not.toHaveBeenCalled();
+    expect(mockDb.sync_queue.add).toHaveBeenCalledWith(
+      expect.objectContaining({ bookId: "b1", operation: "upsert", payload: localBook }),
+    );
   });
 });
 

@@ -179,6 +179,39 @@ function getLocalSyncCursor(userId: string): string | null {
   }
 }
 
+// Rows soft-deleted before d53abf6 were stamped with deleted_at only, leaving
+// updated_at stale — the incremental pull query (gt("updated_at", cursor)) can
+// never surface those tombstones to a device whose cursor is already past the
+// row's last edit. Dropping the local cursor once forces a full re-pull (see
+// the `if (localCursor)` guard in pullRemoteChanges), which returns every
+// legacy tombstone through the safe delete gate. This is self-correcting and
+// safe to do exactly once per user per device: the merge is idempotent, so
+// re-pulling rows we already have is a no-op, and any local edit strictly
+// newer than a delete still wins and gets re-pushed.
+function tombstoneReconcileKey(userId: string): string {
+  return `tsundoku_tombstone_reconcile_v1_${userId}`;
+}
+
+export function reconcileLegacyTombstones(userId: string): void {
+  try {
+    if (localStorage.getItem(tombstoneReconcileKey(userId))) return;
+  } catch {
+    return;
+  }
+
+  // Reset the cursor first — if setting the flag below fails, we simply
+  // reconcile again on the next boot (harmless and idempotent). Doing it in
+  // the reverse order could mark reconciliation done without ever resetting
+  // the cursor, permanently skipping the fix.
+  resetLocalSyncCursor(userId);
+
+  try {
+    localStorage.setItem(tombstoneReconcileKey(userId), "1");
+  } catch {
+    // localStorage unavailable
+  }
+}
+
 // Overlap window to subtract from max(updated_at) when setting the pull cursor.
 // Absorbs cross-device clock skew so changes written just-before our pull are
 // caught on the next pull. The local-vs-remote merge is idempotent, so re-pulling
