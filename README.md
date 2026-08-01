@@ -10,6 +10,9 @@ facts_en: "Next.js 16, local-first on IndexedDB, Supabase sync, offline PWA."
 
 Tsundoku (積ん読) is a PWA for organizing personal book collections. Inspired by the Japanese concept of letting unread books pile up, it provides a Kanban-style board to track books across four stages: wishlist, unread pile, library, and to sell. Available in French and English, with light and dark mode. Works offline with local-first storage — optionally sign in to sync across devices and contribute to the community book catalog.
 
+![Manual entry screen showing search results for "Dune", listing five matching editions with cover, title, and author](public/screenshots/screenshot-add.png)
+![Kanban board with the Tsundoku (unread pile) stage selected, showing four books alongside the Wishlist, Library, and To sell tabs](public/screenshots/screenshot-board.png)
+
 ## Tech Stack
 
 - **Next.js 16** (App Router, Turbopack) + **React 19** + **TypeScript**
