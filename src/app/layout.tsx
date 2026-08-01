@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
+import Script from "next/script";
 import { PreferencesProvider } from "@/lib/preferences";
 import { AuthProvider } from "@/lib/auth";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
@@ -70,6 +71,12 @@ export default function RootLayout({
             {children}
           </AuthProvider>
         </PreferencesProvider>
+        <Script
+          defer
+          src="https://s.revah.paris/u.js"
+          data-website-id="006ac5d2-2340-42b1-9cbc-b63d353943fa"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
