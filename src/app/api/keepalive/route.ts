@@ -13,10 +13,17 @@ export function authorizeCronRequest(
   authHeader: string | null,
   secret: string | undefined,
 ): { allowed: boolean; authenticated: boolean } {
-  if (!secret) {
+  const trimmedSecret = secret?.trim();
+  if (!trimmedSecret) {
     return { allowed: true, authenticated: false };
   }
-  return { allowed: authHeader === `Bearer ${secret}`, authenticated: true };
+  // A secret stored with a trailing newline can never match: HTTP strips
+  // trailing whitespace from header values, so the header arrives shorter
+  // than the string we build from the env var. Compare both trimmed.
+  return {
+    allowed: authHeader?.trim() === `Bearer ${trimmedSecret}`,
+    authenticated: true,
+  };
 }
 
 export async function GET(request: Request) {
