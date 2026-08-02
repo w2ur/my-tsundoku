@@ -79,4 +79,4 @@ AGPL-3.0-only. Commercial licensing available — contact w@revah.paris.
 - Content files (quotes, roadmap, changelog) are locale-indexed separately from the translation dictionary
 - Fonts: Playfair Display (serif), Inter (sans)
 - Bump the version in `package.json` (semver) when a commit changes user-facing behavior. Add a matching entry in `src/lib/changelog.ts`. Internal changes (refactors, tests, docs) don't trigger a bump.
-- Supabase free tier auto-pauses projects after ~7 days of inactivity. A daily Vercel Cron (`vercel.json` → `/api/keepalive`) reads one row from `community_books` to keep the project active. Requires `CRON_SECRET` env var set on Vercel.
+- Supabase free tier auto-pauses projects after ~7 days of inactivity. A daily Vercel Cron (`vercel.json` → `/api/keepalive`) reads one row from `community_books` to keep the project active. `CRON_SECRET` on Vercel authenticates the call; if it is missing or empty the route still pings and reports `authenticated: false`, because a strict check would reject Vercel's own scheduler (it sends no usable header without a secret) and silently disable the keepalive.
