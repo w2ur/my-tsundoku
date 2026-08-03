@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.7.0",
+    date: "2026-08-03",
+    changes: {
+      fr: [
+        "Scanner un livre que vous avez déjà vous le dit tout de suite, en indiquant dans quelle pile il se trouve et depuis quand",
+        "Si le livre était dans « à acheter », un geste suffit pour le faire passer dans votre tsundoku — plus de doublon",
+        "Les livres français que les catalogues internationaux ignorent sont maintenant retrouvés dans le catalogue de la BnF, au lieu de vous renvoyer à la saisie manuelle",
+      ],
+      en: [
+        "Scanning a book you already own tells you straight away, with the pile it sits in and since when",
+        "If the book was in \"to buy\", one tap moves it into your tsundoku — no more duplicate",
+        "French books the international catalogues ignore are now found in the French national library catalogue, instead of sending you back to manual entry",
+      ],
+    },
+  },
+  {
     version: "2.6.0",
     date: "2026-08-03",
     changes: {

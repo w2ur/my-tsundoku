@@ -75,10 +75,9 @@ src/
 
 Planned features (in no particular order):
 
-- **Share your Tsundoku** — Share your book piles and recommendations with friends
-- **Book clubs** — Find readers with the same books and start a club
-- **Find in bookstores** — Find your books in online bookstores
-- **Reading statistics** — Track how many books you read per month and year
+- **Sort your piles** — Order a column by author, title or date added
+- **Pile statistics** — See how fast your pile grows, and how long your books have been waiting
+- **Find in a bookshop** — Reach the books you mean to buy at your bookshop, in one tap
 
 Have a suggestion? [Get in touch](mailto:contact@my-tsundoku.app).
 
