@@ -7,6 +7,9 @@ import { searchCommunityBooks, deduplicateResults, type CommunityBook } from "@/
 import { useTranslation } from "@/lib/preferences";
 import { useAuth } from "@/lib/auth";
 import { resolveCoverUrl } from "@/lib/covers";
+import { getAllBooks } from "@/lib/books";
+import { findDuplicate } from "@/lib/duplicates";
+import type { Book } from "@/lib/types";
 import GeneratedCover from "@/components/GeneratedCover";
 import CoverCrop from "@/components/CoverCrop";
 
@@ -24,9 +27,14 @@ interface Props {
   initial?: Partial<BookFormData>;
   onSubmit: (data: BookFormData) => void;
   submitLabel?: string;
+  /**
+   * Book being edited, if any. Excluded from the "already yours" check so the
+   * form does not report the very book you are editing as a duplicate of itself.
+   */
+  excludeBookId?: string;
 }
 
-export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
+export default function BookForm({ initial, onSubmit, submitLabel, excludeBookId }: Props) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -40,6 +48,7 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
   const [communityResults, setCommunityResults] = useState<CommunityBook[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [library, setLibrary] = useState<Book[]>([]);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [coverUploading, setCoverUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,7 +88,19 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
     const { ol, community } = deduplicateResults(olResults, communityRaw);
     setSearchResults(ol);
     setCommunityResults(community);
+    // Read the library once per search rather than once per rendered row.
+    const owned = await getAllBooks();
+    setLibrary(excludeBookId ? owned.filter((b) => b.id !== excludeBookId) : owned);
     setSearchLoading(false);
+  }
+
+  function isAlreadyOwned(result: { isbn?: string | null; title: string; author: string }): boolean {
+    return (
+      findDuplicate(
+        { ...(result.isbn ? { isbn: result.isbn } : {}), title: result.title, author: result.author },
+        library,
+      ) !== null
+    );
   }
 
   function handleResultSelect(result: OpenLibraryResult) {
@@ -180,7 +201,14 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
                 </div>
               )}
               <div className="min-w-0">
-                <p className="text-sm font-medium text-ink truncate">{result.title}</p>
+                <p className="text-sm font-medium text-ink truncate">
+                  {result.title}
+                  {isAlreadyOwned(result) && (
+                    <span className="ml-2 rounded-full bg-amber/10 px-2 py-0.5 text-[11px] font-medium text-amber-ink">
+                      {t("duplicate_badge")}
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-subtle truncate">{result.author}</p>
               </div>
             </button>
@@ -220,7 +248,14 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
                   <GeneratedCover title={result.title} author={result.author} width={32} height={48} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-ink truncate">{result.title}</p>
+                  <p className="text-sm font-medium text-ink truncate">
+                    {result.title}
+                    {isAlreadyOwned(result) && (
+                      <span className="ml-2 rounded-full bg-amber/10 px-2 py-0.5 text-[11px] font-medium text-amber-ink">
+                        {t("duplicate_badge")}
+                      </span>
+                    )}
+                  </p>
                   <p className="text-xs text-subtle truncate">{result.author}</p>
                 </div>
               </button>
