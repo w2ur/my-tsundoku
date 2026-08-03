@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import BookConfirmation from "@/components/BookConfirmation";
-import { getBookByISBN } from "@/lib/open-library";
+import { lookupByISBN } from "@/lib/book-lookup";
 import { addBook } from "@/lib/books";
 import { isValidISBN } from "@/lib/isbn";
 import type { Stage } from "@/lib/types";
@@ -49,7 +49,7 @@ export default function ScanPage() {
     setStatus("loading");
 
     try {
-      const result = await getBookByISBN(cleaned);
+      const result = await lookupByISBN(cleaned);
       if (result) {
         setBookData({ title: result.title, author: result.author, coverUrl: result.coverUrl });
         setStatus("confirm");
