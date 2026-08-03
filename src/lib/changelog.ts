@@ -8,6 +8,30 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.6.0",
+    date: "2026-08-03",
+    changes: {
+      fr: [
+        "Tout le texte secondaire est nettement plus lisible : les auteurs, les citations et les libellés étaient affichés en gris trop clair, sous le seuil de lisibilité recommandé",
+        "Le zoom à deux doigts fonctionne de nouveau — il était désactivé sur toute l'application",
+        "Les onglets affichent maintenant leur nom en entier sur mobile, avec de vraies icônes à la place des emojis",
+        "Navigation au clavier : l'élément sélectionné est enfin visible",
+        "Les animations se calment si vous avez activé « Réduire les animations » dans votre système",
+        "Le bouton d'ajout ne se glisse plus sous la barre de geste de l'iPhone",
+        "Les Réglages occupent toute la largeur sur ordinateur au lieu d'une colonne étroite",
+      ],
+      en: [
+        "Secondary text is far more legible throughout: authors, quotes and labels were rendered in a grey too light to meet the recommended readability threshold",
+        "Pinch-to-zoom works again — it was disabled across the whole app",
+        "Tabs now show their full name on mobile, with real icons instead of emoji",
+        "Keyboard navigation: the focused element is finally visible",
+        "Animations settle down if you have \"Reduce motion\" enabled in your system",
+        "The add button no longer slips under the iPhone gesture bar",
+        "Settings uses the full width on desktop instead of a narrow column",
+      ],
+    },
+  },
+  {
     version: "2.5.0",
     date: "2026-08-03",
     changes: {

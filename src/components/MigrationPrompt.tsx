@@ -24,11 +24,11 @@ export default function MigrationPrompt({ bookCount, onUpload, onSkip }: Migrati
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/30 backdrop-blur-sm">
-      <div className="bg-surface rounded-2xl p-6 shadow-xl max-w-sm w-full border border-forest/10">
+      <div className="bg-surface rounded-2xl p-6 shadow-xl max-w-sm w-full border border-border-subtle">
         <h2 className="font-serif text-xl text-forest mb-2">
           {t("migration_title")}
         </h2>
-        <p className="text-sm text-forest/70 mb-6">
+        <p className="text-sm text-muted mb-6">
           {t("migration_message").replace("{count}", String(bookCount))}
         </p>
         <div className="flex flex-col gap-3">

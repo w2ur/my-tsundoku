@@ -9,7 +9,7 @@ export default function OfflinePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-paper">
       <h1 className="font-serif text-3xl text-forest mb-4">{t("offline_title")}</h1>
-      <p className="text-forest/50 text-center max-w-sm">
+      <p className="text-subtle text-center max-w-sm">
         {t("offline_text")}
       </p>
       <Link

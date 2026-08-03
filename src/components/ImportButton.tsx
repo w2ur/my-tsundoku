@@ -50,7 +50,7 @@ export default function ImportButton() {
   return (
     <div className="space-y-3">
       {status === "idle" && (
-        <label className="block w-full py-3 border border-forest/15 rounded-lg font-medium text-sm text-center text-forest/60 cursor-pointer hover:bg-cream transition-colors">
+        <label className="block w-full py-3 border border-border-strong rounded-lg font-medium text-sm text-center text-muted cursor-pointer hover:bg-cream transition-colors">
           {t("import_backup")}
           <input
             ref={fileRef}
@@ -63,16 +63,16 @@ export default function ImportButton() {
       )}
 
       {status === "confirm" && (
-        <div className="space-y-3 p-4 bg-surface border border-forest/10 rounded-xl">
+        <div className="space-y-3 p-4 bg-surface border border-border-subtle rounded-xl">
           <p className="text-sm text-ink">
             {plural(bookCount, t("import_booksFound_one"), t("import_booksFound_other"))}
           </p>
           {rejected.length > 0 && (
             <div className="rounded-lg border border-amber/40 bg-amber/5 px-3 py-2">
-              <p className="text-xs font-medium text-amber">
+              <p className="text-xs font-medium text-amber-ink">
                 {plural(rejected.length, t("import_rejected_one"), t("import_rejected_other"))}
               </p>
-              <ul className="mt-1 space-y-0.5 text-xs text-forest/60">
+              <ul className="mt-1 space-y-0.5 text-xs text-muted">
                 {rejected.slice(0, 5).map((r, i) => (
                   <li key={`${r.label}-${i}`}>
                     {r.label} — {r.reason}
@@ -80,7 +80,7 @@ export default function ImportButton() {
                 ))}
               </ul>
               {rejected.length > 5 && (
-                <p className="mt-1 text-xs text-forest/40">…</p>
+                <p className="mt-1 text-xs text-subtle">…</p>
               )}
             </div>
           )}
@@ -100,7 +100,7 @@ export default function ImportButton() {
           </div>
           <button
             onClick={() => { setStatus("idle"); setPendingBooks(null); }}
-            className="w-full py-2 text-sm text-forest/40 hover:text-forest/60"
+            className="w-full py-2 text-sm text-subtle hover:text-muted"
           >
             {t("cancel")}
           </button>

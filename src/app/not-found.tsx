@@ -9,7 +9,7 @@ export default function NotFound() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-paper">
       <h1 className="font-serif text-5xl text-forest mb-2">404</h1>
-      <p className="text-forest/50 text-center max-w-sm mb-6">
+      <p className="text-subtle text-center max-w-sm mb-6">
         {t("notFound_text")}
       </p>
       <Link

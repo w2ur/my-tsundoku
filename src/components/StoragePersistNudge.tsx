@@ -23,15 +23,15 @@ export default function StoragePersistNudge() {
   if (!visible) return null;
 
   return (
-    <div className="px-4 py-2 bg-amber/10 border-b border-amber/20 flex items-start gap-3 text-xs text-forest/70">
+    <div className="px-4 py-2 bg-amber/10 border-b border-amber/20 flex items-start gap-3 text-xs text-muted">
       <p className="flex-1">{t("persist_nudge")}</p>
       <div className="flex items-center gap-2 flex-shrink-0">
-        <Link href="/settings" className="underline hover:text-forest/90 transition-colors">
+        <Link href="/settings" className="underline hover:text-ink transition-colors">
           {t("export_library")}
         </Link>
         <button
           onClick={handleDismiss}
-          className="text-forest/40 hover:text-forest/60 transition-colors"
+          className="text-subtle hover:text-muted transition-colors"
           aria-label={t("persist_nudge_dismiss")}
         >
           ×

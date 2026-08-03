@@ -45,7 +45,7 @@ export default function SyncIndicator() {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-forest/60"
+            className="text-muted"
             animate={{ x: [0, 1.5, 0, -1.5, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
           >
@@ -64,7 +64,7 @@ export default function SyncIndicator() {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-amber"
+            className="text-amber-ink"
           >
             <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
             <path d="M12 9v4" />
@@ -82,14 +82,14 @@ export default function SyncIndicator() {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-forest/30"
+            className="text-subtle"
           >
             <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
           </svg>
         )}
       </div>
       {showTooltip && (
-        <div className="absolute top-full right-0 mt-1 px-2 py-1 bg-surface border border-forest/10 rounded-lg shadow-lg text-xs text-forest whitespace-nowrap z-50">
+        <div className="absolute top-full right-0 mt-1 px-2 py-1 bg-surface border border-border-subtle rounded-lg shadow-lg text-xs text-forest whitespace-nowrap z-50">
           {label}
         </div>
       )}

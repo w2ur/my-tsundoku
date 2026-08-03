@@ -32,7 +32,7 @@ export default function BookConfirmation({
   const [useGenerated, setUseGenerated] = useState(!coverUrl);
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-surface border border-forest/15 rounded-lg text-sm text-ink placeholder:text-forest/30 focus:outline-none focus:ring-2 focus:ring-forest/20 focus:border-forest/30";
+    "w-full px-3 py-2.5 bg-surface border border-border-strong rounded-lg text-sm text-ink placeholder:text-subtle";
 
   return (
     <div className="flex flex-col items-center gap-6 py-6">
@@ -55,7 +55,7 @@ export default function BookConfirmation({
         <button
           type="button"
           onClick={() => setUseGenerated((v) => !v)}
-          className="text-xs text-forest/40 underline hover:text-forest/60 transition-colors"
+          className="text-xs text-subtle underline hover:text-muted transition-colors"
         >
           {useGenerated ? t("cover_useOriginal") : t("cover_useGenerated")}
         </button>
@@ -63,13 +63,13 @@ export default function BookConfirmation({
 
       <div className="text-center">
         <h2 className="font-serif text-xl font-semibold text-ink">{title}</h2>
-        {author && <p className="text-sm text-forest/50 mt-1">{author}</p>}
+        {author && <p className="text-sm text-subtle mt-1">{author}</p>}
       </div>
 
       <div className="w-full max-w-xs space-y-3">
         <div>
-          <label className="block text-sm font-medium text-forest/70 mb-1">
-            {t("form_storeUrl")} <span className="font-normal text-forest/40">{t("optional")}</span>
+          <label className="block text-sm font-medium text-muted mb-1">
+            {t("form_storeUrl")} <span className="font-normal text-subtle">{t("optional")}</span>
           </label>
           <input
             type="url"
@@ -80,8 +80,8 @@ export default function BookConfirmation({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-forest/70 mb-1">
-            {t("form_notes")} <span className="font-normal text-forest/40">{t("optional")}</span>
+          <label className="block text-sm font-medium text-muted mb-1">
+            {t("form_notes")} <span className="font-normal text-subtle">{t("optional")}</span>
           </label>
           <textarea
             value={notes}
@@ -96,7 +96,7 @@ export default function BookConfirmation({
       <div className="flex gap-3 w-full max-w-xs">
         <button
           onClick={onCancel}
-          className="flex-1 py-2.5 border border-forest/15 rounded-lg text-sm font-medium text-forest/60 hover:bg-cream transition-colors"
+          className="flex-1 py-2.5 border border-border-strong rounded-lg text-sm font-medium text-muted hover:bg-cream transition-colors"
         >
           {t("cancel")}
         </button>

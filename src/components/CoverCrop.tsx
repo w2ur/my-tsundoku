@@ -56,7 +56,7 @@ export default function CoverCrop({ src, onCrop, onCancel }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/30 backdrop-blur-sm">
-      <div className="bg-surface rounded-2xl p-6 shadow-xl max-w-sm w-full border border-forest/10 flex flex-col gap-4">
+      <div className="bg-surface rounded-2xl p-6 shadow-xl max-w-sm w-full border border-border-subtle flex flex-col gap-4">
         <h2 className="font-serif text-xl text-forest">{t("cover_cropTitle")}</h2>
         <div className="flex justify-center overflow-auto max-h-[60vh]">
           <ReactCrop

@@ -142,12 +142,12 @@ export default function BarcodeScanner({ onScan, onError }: Props) {
       />
       {status === "init" && (
         <div className="flex items-center justify-center h-48 bg-cream rounded-xl">
-          <p className="text-sm text-forest/30">{t("scanner_init")}</p>
+          <p className="text-sm text-subtle">{t("scanner_init")}</p>
         </div>
       )}
       {status === "needs-gesture" && (
         <div className="flex flex-col items-center justify-center h-48 bg-cream rounded-xl gap-3">
-          <p className="text-sm text-forest/50">{t("scanner_permissionRequired")}</p>
+          <p className="text-sm text-subtle">{t("scanner_permissionRequired")}</p>
           <button
             onClick={handleManualStart}
             className="px-5 py-2.5 bg-forest text-paper rounded-lg text-sm font-medium hover:bg-forest/90 transition-colors"
@@ -158,7 +158,7 @@ export default function BarcodeScanner({ onScan, onError }: Props) {
       )}
       {status === "error" && (
         <div className="flex items-center justify-center h-48 bg-cream rounded-xl">
-          <p className="text-sm text-forest/40">{t("scanner_unavailable")}</p>
+          <p className="text-sm text-subtle">{t("scanner_unavailable")}</p>
         </div>
       )}
     </div>

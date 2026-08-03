@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import GeneratedCover from "@/components/GeneratedCover";
+import StageIcon from "@/components/StageIcon";
 import { STAGES, STAGE_CONFIG } from "@/lib/constants";
 import { moveBookToPosition } from "@/lib/books";
 import { getSwipeThresholds, shouldConfirm, vibrate } from "@/lib/swipe";
@@ -255,7 +256,11 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
                 </>
               )}
             </svg>
-            <span className="text-base">{STAGE_CONFIG[visibleTarget].emoji}</span>
+            <StageIcon
+              stage={visibleTarget}
+              size={18}
+              className={STAGE_CONFIG[visibleTarget].color}
+            />
             <span className={`text-xs font-medium text-center leading-tight whitespace-pre-line ${STAGE_CONFIG[visibleTarget].color}`}>
               {t(STAGE_CONFIG[visibleTarget].swipeLabelKey)}
             </span>
@@ -278,7 +283,7 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
       >
         <Link
           href={`/book/${book.id}`}
-          className="group flex gap-3 p-3 rounded-xl bg-surface border border-forest/5 shadow-sm select-none"
+          className="group flex gap-3 p-3 rounded-xl bg-surface border border-border-subtle shadow-sm select-none"
           style={{ WebkitTouchCallout: "none" }}
           onClick={(e) => {
             // Prevent navigation during swipe/peeking
@@ -306,11 +311,11 @@ export default function SwipeableBookCard({ book }: { book: Book }) {
             <h3 className="font-serif text-sm font-semibold text-ink truncate leading-tight">
               {book.title}
             </h3>
-            <p className="text-xs text-forest/50 truncate mt-0.5">
+            <p className="text-xs text-subtle truncate mt-0.5">
               {book.author}
             </p>
             {book.isReading && (
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber mt-1" role="img" aria-label={t("book_reading")}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-ink mt-1" role="img" aria-label={t("book_reading")}>
                 <path d="M12 7v14" />
                 <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
               </svg>

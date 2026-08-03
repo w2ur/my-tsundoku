@@ -13,7 +13,7 @@ export default function HomeApp() {
   const [scrollToBookId, setScrollToBookId] = useState<string | null>(null);
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="h-dvh flex flex-col overflow-hidden">
       <Header
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}

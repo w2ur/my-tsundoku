@@ -48,7 +48,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
       <div className="min-h-screen flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-forest/30 text-sm">{t("loading")}</p>
+          <p className="text-subtle text-sm">{t("loading")}</p>
         </div>
       </div>
     );
@@ -59,7 +59,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
       <div className="min-h-screen flex flex-col">
         <Header />
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-forest/40 text-sm">{t("book_notFound")}</p>
+          <p className="text-subtle text-sm">{t("book_notFound")}</p>
         </div>
       </div>
     );
@@ -112,7 +112,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               />
               <button
                 onClick={() => setEditing(false)}
-                className="w-full max-w-xs py-2 border border-forest/15 rounded-lg text-xs text-forest/60 hover:bg-cream transition-colors"
+                className="w-full max-w-xs py-2 border border-border-strong rounded-lg text-xs text-muted hover:bg-cream transition-colors"
               >
                 {t("cancel")}
               </button>
@@ -137,14 +137,14 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               <div className="text-center">
                 <h1 className="font-serif text-2xl font-semibold text-ink">{book.title}</h1>
                 {book.author && (
-                  <p className="text-base text-forest/50 mt-1">{book.author}</p>
+                  <p className="text-base text-subtle mt-1">{book.author}</p>
                 )}
               </div>
 
               <div className="flex gap-3">
                 <button
                   onClick={() => setEditing(true)}
-                  className="text-xs text-forest/40 underline hover:text-forest/60 transition-colors"
+                  className="text-xs text-subtle underline hover:text-muted transition-colors"
                 >
                   {t("book_edit")}
                 </button>
@@ -154,7 +154,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                       const next = book.coverUrl ? "" : savedOriginal;
                       updateBook(book.id, { coverUrl: next });
                     }}
-                    className="text-xs text-forest/40 underline hover:text-forest/60 transition-colors"
+                    className="text-xs text-subtle underline hover:text-muted transition-colors"
                   >
                     {book.coverUrl ? t("cover_useGenerated") : t("cover_useOriginal")}
                   </button>
@@ -170,7 +170,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
             <div className="w-full max-w-xs">
               {showUnmarkPrompt ? (
                 <div className="flex flex-col gap-2 p-4 bg-cream rounded-xl">
-                  <p className="text-sm text-forest/70 text-center">
+                  <p className="text-sm text-muted text-center">
                     {t("book_moveToNextStage").replace(
                       "{stage}",
                       STAGE_TRANSITIONS[book.stage]?.[0]
@@ -187,7 +187,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                     </button>
                     <button
                       onClick={() => handleUnmarkConfirm(false)}
-                      className="flex-1 py-2 border border-forest/15 rounded-lg text-sm text-forest/60"
+                      className="flex-1 py-2 border border-border-strong rounded-lg text-sm text-muted"
                     >
                       {t("book_moveToNextStage_no")}
                     </button>
@@ -198,8 +198,8 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                   onClick={book.isReading ? handleUnmarkReading : handleMarkReading}
                   className={`w-full py-2.5 rounded-lg text-sm font-medium transition-colors ${
                     book.isReading
-                      ? "bg-amber/15 text-amber border border-amber/30"
-                      : "border border-forest/15 text-forest/50 hover:bg-cream"
+                      ? "bg-amber/15 text-amber-ink border border-amber/30"
+                      : "border border-border-strong text-subtle hover:bg-cream"
                   }`}
                 >
                   {book.isReading ? t("book_unmarkReading") : t("book_markReading")}
@@ -215,7 +215,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
                 href={book.storeUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-forest/40 hover:text-forest/60 transition-colors"
+                className="inline-flex items-center gap-1 text-xs text-subtle hover:text-muted transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -231,7 +231,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
           {!editing && book.notes && (
             <div className="w-full max-w-xs">
               <div className="bg-cream rounded-xl p-4">
-                <p className="text-sm text-forest/70 whitespace-pre-wrap">{book.notes}</p>
+                <p className="text-sm text-muted whitespace-pre-wrap">{book.notes}</p>
               </div>
             </div>
           )}
@@ -242,7 +242,7 @@ export default function BookDetailPage({ params }: { params: Promise<{ id: strin
               stage={book.stage}
               onMoved={() => router.push("/")}
             />
-            <div className="pt-4 border-t border-forest/10">
+            <div className="pt-4 border-t border-border-subtle">
               <DeleteButton bookId={book.id} onDeleted={() => router.push("/")} />
             </div>
           </div>

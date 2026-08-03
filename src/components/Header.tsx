@@ -45,7 +45,7 @@ export default function Header({ searchQuery, onSearchChange, isSearchOpen = fal
   }
 
   return (
-    <header className="flex items-center justify-between px-4 md:px-8 py-4 border-b border-forest/10">
+    <header className="flex items-center justify-between px-4 md:px-8 py-4 border-b border-border-subtle">
       <AnimatePresence mode="wait">
         {isSearchOpen ? (
           <motion.div
@@ -66,7 +66,7 @@ export default function Header({ searchQuery, onSearchChange, isSearchOpen = fal
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-forest/40 flex-shrink-0"
+              className="text-subtle flex-shrink-0"
             >
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.3-4.3" />
@@ -82,11 +82,11 @@ export default function Header({ searchQuery, onSearchChange, isSearchOpen = fal
                 setTimeout(() => window.scrollTo(0, window.scrollY), 100);
               }}
               placeholder={t("header_searchPlaceholder")}
-              className="flex-1 bg-transparent text-forest text-sm outline-none placeholder:text-forest/30"
+              className="flex-1 bg-transparent text-forest text-sm placeholder:text-subtle"
             />
             <button
               onClick={handleClose}
-              className="p-1 rounded-md hover:bg-forest/5 transition-colors text-forest/40 hover:text-forest/60"
+              className="p-3 -mr-1 rounded-md hover:bg-forest/5 transition-colors text-subtle hover:text-muted"
               aria-label={t("header_closeSearch")}
             >
               <svg
@@ -117,7 +117,7 @@ export default function Header({ searchQuery, onSearchChange, isSearchOpen = fal
             {!isHome && (
               <button
                 onClick={() => router.back()}
-                className="p-2 -ml-2 rounded-lg hover:bg-forest/5 transition-colors text-forest"
+                className="p-3 -ml-3 rounded-lg hover:bg-forest/5 transition-colors text-forest"
                 aria-label={t("header_back")}
               >
                 <svg
@@ -151,7 +151,7 @@ export default function Header({ searchQuery, onSearchChange, isSearchOpen = fal
         {hasSearch && !isSearchOpen && (
           <button
             onClick={() => onSearchOpenChange?.(true)}
-            className="p-2 rounded-lg hover:bg-forest/5 transition-colors"
+            className="p-3 rounded-lg hover:bg-forest/5 transition-colors"
             aria-label={t("header_search")}
           >
             <svg
@@ -164,7 +164,7 @@ export default function Header({ searchQuery, onSearchChange, isSearchOpen = fal
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-forest/60"
+              className="text-muted"
             >
               <circle cx="11" cy="11" r="8" />
               <path d="m21 21-4.3-4.3" />
@@ -173,7 +173,7 @@ export default function Header({ searchQuery, onSearchChange, isSearchOpen = fal
         )}
         <Link
           href="/settings"
-          className="p-2 rounded-lg hover:bg-forest/5 transition-colors"
+          className="p-3 rounded-lg hover:bg-forest/5 transition-colors"
           aria-label={t("header_settings")}
         >
           <svg
@@ -186,7 +186,7 @@ export default function Header({ searchQuery, onSearchChange, isSearchOpen = fal
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-forest/60"
+            className="text-muted"
           >
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
             <circle cx="12" cy="12" r="3" />

@@ -13,7 +13,7 @@ export default function Error({
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-paper">
       <h1 className="font-serif text-3xl text-forest mb-2">{t("error_title")}</h1>
-      <p className="text-forest/50 text-center max-w-sm mb-6">
+      <p className="text-subtle text-center max-w-sm mb-6">
         {t("error_text")}
       </p>
       <button

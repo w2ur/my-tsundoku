@@ -15,7 +15,7 @@ function ScannerLoading() {
   const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center h-48 bg-cream rounded-xl">
-      <p className="text-sm text-forest/30">{t("scanner_loading")}</p>
+      <p className="text-sm text-subtle">{t("scanner_loading")}</p>
     </div>
   );
 }
@@ -120,13 +120,13 @@ export default function ScanPage() {
             {/* Loading indicator */}
             {isLoading && (
               <div className="flex items-center justify-center h-48 bg-cream rounded-xl">
-                <p className="text-sm text-forest/30 animate-pulse">{t("scan_searching")}</p>
+                <p className="text-sm text-subtle animate-pulse">{t("scan_searching")}</p>
               </div>
             )}
 
             {/* ISBN input */}
             <form onSubmit={handleSubmit} className="space-y-3">
-              <label htmlFor="isbn-input" className="block text-sm font-medium text-forest/70">
+              <label htmlFor="isbn-input" className="block text-sm font-medium text-muted">
                 {t("scan_isbnLabel")}
               </label>
               <div className="flex gap-2">
@@ -139,7 +139,7 @@ export default function ScanPage() {
                   onChange={(e) => setIsbn(e.target.value)}
                   placeholder="978..."
                   disabled={isLoading}
-                  className="flex-1 px-3 py-2.5 bg-surface border border-forest/15 rounded-lg text-sm text-ink placeholder:text-forest/30 focus:outline-none focus:ring-2 focus:ring-forest/20 focus:border-forest/30 disabled:opacity-50"
+                  className="flex-1 px-3 py-2.5 bg-surface border border-border-strong rounded-lg text-sm text-ink placeholder:text-subtle disabled:opacity-50"
                 />
                 <button
                   type="submit"
@@ -152,7 +152,7 @@ export default function ScanPage() {
 
               {/* Inline error */}
               {error && (
-                <p className="text-sm text-red-500">{error}</p>
+                <p className="text-sm text-danger">{error}</p>
               )}
             </form>
 
@@ -160,7 +160,7 @@ export default function ScanPage() {
             <div className="text-center pt-2">
               <a
                 href={isbn && isValidISBN(isbn) ? `/add/manual?stage=${stage}&isbn=${isbn}` : `/add/manual?stage=${stage}`}
-                className="text-sm text-forest/40 hover:text-forest/60 transition-colors"
+                className="text-sm text-subtle hover:text-muted transition-colors"
               >
                 {t("scan_manualEntry")}
               </a>

@@ -1,13 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { STAGES, STAGE_CONFIG, STAGE_TRANSITIONS } from "./constants";
-import type { Stage } from "./constants";
 
 describe("STAGE_CONFIG", () => {
   it("has a config entry for every stage", () => {
     for (const stage of STAGES) {
       expect(STAGE_CONFIG[stage]).toBeDefined();
       expect(STAGE_CONFIG[stage].labelKey).toBeTruthy();
-      expect(STAGE_CONFIG[stage].emoji).toBeTruthy();
       expect(STAGE_CONFIG[stage].color).toBeTruthy();
       expect(STAGE_CONFIG[stage].bgColor).toBeTruthy();
     }

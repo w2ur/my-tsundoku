@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/*
+ * Text colors are solid, not alpha-faded.
+ *
+ * The previous scale expressed hierarchy as text-forest/30..70. Composited on
+ * paper that scale runs 1.68:1 -> 4.07:1, so every tier below full opacity
+ * failed WCAG AA for body text (the author line on each book card sat at
+ * 2.53:1). Solid tokens let light and dark be tuned independently — the fade
+ * scale could not, which is why light mode was the weaker of the two themes.
+ *
+ * Ratios below are the worst case across paper / surface / cream in that theme.
+ */
 :root {
   --background: #FAF8F5;
   --foreground: #2D4A3E;
@@ -8,24 +19,51 @@
   --forest: #2D4A3E;
   --amber: #C4956A;
   --cream: #F5F0EB;
-  --ink: #1a1a1a;
+
+  --ink: #1a1a1a;        /* 16.4:1 — titles, values, primary text */
+  --muted: #415B4F;      /*  6.5:1 — secondary text, labels, active nav */
+  --subtle: #556B61;     /*  5.1:1 — tertiary text, placeholders, captions */
+  --faint: #697C72;      /*  3.9:1 — decorative only: bullets, separators */
+  --amber-ink: #8F5D2A;  /*  4.9:1 — amber used as text or meaningful icon */
+
+  --border-subtle: #D8D3CB;
+  --border-strong: #CBC5BB;
+  --focus-ring: #2D4A3E;
+
+  --danger: #b91c1c;       /*  6.1:1 — destructive labels and error text */
+  --danger-border: #fecaca;
+
   --success-bg: #f0fdf4;
   --success-border: #bbf7d0;
   --success-text: #15803d;
   --error-bg: #fef2f2;
   --error-border: #fecaca;
-  --error-text: #dc2626;
+  --error-text: #b91c1c;
 }
 
 [data-theme="dark"] {
   --background: #1A2B24;
   --foreground: #E8E2DB;
   --paper: #1A2B24;
-  --surface: #243830;
+  --surface: #2E463C;    /* was #243830 — 1.19:1 vs page made cards invisible */
   --forest: #E8E2DB;
   --amber: #C4956A;
-  --cream: #1F322B;
-  --ink: #E8E2DB;
+  --cream: #253A32;
+
+  --ink: #E8E2DB;        /*  9.7:1 */
+  --muted: #C1C0B9;      /*  6.8:1 */
+  --subtle: #ADAFA8;     /*  5.6:1 */
+  --faint: #9A9E97;      /*  4.6:1 */
+  --amber-ink: #D4AD87;  /*  4.9:1 — lifted off --amber, which only cleared AA
+                                against the old darker surface */
+
+  --border-subtle: #43584D;
+  --border-strong: #4D6459;
+  --focus-ring: #E8E2DB;
+
+  --danger: #fca5a5;       /*  5.4:1 on the dark surface */
+  --danger-border: #7f1d1d;
+
   --success-bg: #052e16;
   --success-border: #14532d;
   --success-text: #86efac;
@@ -42,7 +80,18 @@
   --color-forest: var(--forest);
   --color-amber: var(--amber);
   --color-cream: var(--cream);
+
   --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-faint: var(--faint);
+  --color-amber-ink: var(--amber-ink);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-danger: var(--danger);
+  --color-danger-border: var(--danger-border);
+
   --color-success-bg: var(--success-bg);
   --color-success-border: var(--success-border);
   --color-success-text: var(--success-text);
@@ -56,6 +105,25 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Keyboard focus was invisible app-wide: no focus-visible rule existed, and
+   several controls cleared the UA outline without replacing it. The board's
+   KeyboardSensor drag worked but gave no indication of the focused card. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* Safe-area helpers — the app ships display:standalone, so on iOS the home
+   indicator overlaps anything pinned to the bottom. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-safe {
+  bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 @keyframes glow-fade {
@@ -73,4 +141,17 @@ body {
 .glow-highlight {
   animation: glow-fade 2s ease-out forwards;
   border-radius: 0.75rem;
+}
+
+/* CSS transitions/animations only. The motion library runs on JS, so it is
+   handled separately by MotionConfig reducedMotion="user" in the layout. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

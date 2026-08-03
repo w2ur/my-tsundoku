@@ -4,6 +4,7 @@ import Script from "next/script";
 import { PreferencesProvider } from "@/lib/preferences";
 import { AuthProvider } from "@/lib/auth";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
+import MotionProvider from "@/components/MotionProvider";
 import { LANDING } from "@/lib/landing";
 import "./globals.css";
 
@@ -51,7 +52,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // No maximumScale: capping zoom at 1 blocks pinch-zoom (WCAG 1.4.4).
+  // viewportFit "cover" is what makes env(safe-area-inset-*) resolve to real
+  // values, which the bottom-pinned add button depends on.
+  viewportFit: "cover",
   themeColor: "#2D4A3E",
 };
 
@@ -67,8 +71,10 @@ export default function RootLayout({
       >
         <PreferencesProvider>
           <AuthProvider>
-            <ServiceWorkerRegistrar />
-            {children}
+            <MotionProvider>
+              <ServiceWorkerRegistrar />
+              {children}
+            </MotionProvider>
           </AuthProvider>
         </PreferencesProvider>
         <Script

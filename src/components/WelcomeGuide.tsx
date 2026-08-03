@@ -4,6 +4,17 @@ import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/lib/db";
 import { useTranslation } from "@/lib/preferences";
+import { STAGE_CONFIG } from "@/lib/constants";
+import type { Stage } from "@/lib/types";
+import type { TranslationKeys } from "@/lib/i18n";
+import StageIcon from "./StageIcon";
+
+const STAGE_ROWS: { stage: Stage; nameKey: TranslationKeys; descKey: TranslationKeys }[] = [
+  { stage: "a_acheter", nameKey: "welcome_stageAcheter", descKey: "welcome_stageAcheterDesc" },
+  { stage: "tsundoku", nameKey: "welcome_stageTsundoku", descKey: "welcome_stageTsundokuDesc" },
+  { stage: "bibliotheque", nameKey: "welcome_stageBibliotheque", descKey: "welcome_stageBibliothequeDesc" },
+  { stage: "revendre", nameKey: "welcome_stageRevendre", descKey: "welcome_stageRevendreDesc" },
+];
 
 export default function WelcomeGuide() {
   const { t } = useTranslation();
@@ -38,35 +49,24 @@ export default function WelcomeGuide() {
         <h2 className="font-serif text-xl font-semibold text-ink text-center">
           {t("welcome_title")}
         </h2>
-        <p className="text-sm text-forest/50 text-center mt-1">
+        <p className="text-sm text-subtle text-center mt-1">
           {t("welcome_subtitle")}
         </p>
 
+        {/* These four rows are the user's first sight of each stage glyph, so
+            they have to be the same SVGs the tab bar uses — not the emoji they
+            used to hardcode, which no longer appear anywhere else. */}
         <div className="mt-6 space-y-4">
-          <div className="flex items-start gap-3">
-            <span className="text-xl w-8 flex-shrink-0">📋</span>
-            <p className="text-sm text-forest/70">
-              <span className="font-bold">{t("welcome_stageAcheter")}</span> — {t("welcome_stageAcheterDesc")}
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-xl w-8 flex-shrink-0">📚</span>
-            <p className="text-sm text-forest/70">
-              <span className="font-bold">{t("welcome_stageTsundoku")}</span> — {t("welcome_stageTsundokuDesc")}
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-xl w-8 flex-shrink-0">📖</span>
-            <p className="text-sm text-forest/70">
-              <span className="font-bold">{t("welcome_stageBibliotheque")}</span> — {t("welcome_stageBibliothequeDesc")}
-            </p>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-xl w-8 flex-shrink-0">👋</span>
-            <p className="text-sm text-forest/70">
-              <span className="font-bold">{t("welcome_stageRevendre")}</span> — {t("welcome_stageRevendreDesc")}
-            </p>
-          </div>
+          {STAGE_ROWS.map(({ stage, nameKey, descKey }) => (
+            <div key={stage} className="flex items-start gap-3">
+              <span className="w-8 flex-shrink-0 flex justify-center pt-0.5">
+                <StageIcon stage={stage} size={20} className={STAGE_CONFIG[stage].color} />
+              </span>
+              <p className="text-sm text-muted">
+                <span className="font-bold">{t(nameKey)}</span> — {t(descKey)}
+              </p>
+            </div>
+          ))}
         </div>
 
         <button

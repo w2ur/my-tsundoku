@@ -393,7 +393,10 @@ export default function KanbanBoard({
     const timer = setTimeout(() => {
       const element = document.querySelector(`[data-book-id="${CSS.escape(scrollToBookId)}"]`);
       if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        // scrollIntoView is a JS call, so the prefers-reduced-motion block in
+        // globals.css does not apply to it.
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        element.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
         element.classList.add("glow-highlight");
         setTimeout(() => {
           element.classList.remove("glow-highlight");
@@ -408,7 +411,7 @@ export default function KanbanBoard({
   if (!filteredByStage) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-forest/30 text-sm">{t("loading")}</div>
+        <div className="animate-pulse text-subtle text-sm">{t("loading")}</div>
       </div>
     );
   }
@@ -441,7 +444,7 @@ export default function KanbanBoard({
             >
               {books.length === 0 ? (
                 isSearching ? (
-                  <p className="text-center text-sm text-forest/30 py-8">{t("noResults")}</p>
+                  <p className="text-center text-sm text-subtle py-8">{t("noResults")}</p>
                 ) : (
                   <EmptyState quote={uniqueQuotes[activeTab]} />
                 )
@@ -487,15 +490,15 @@ export default function KanbanBoard({
           return (
             <div key={stage} className="flex-1 min-w-0 flex flex-col rounded-xl p-2 bg-cream/50">
               <div className="flex items-center gap-2 px-3 py-2 mb-2">
-                <h2 className="text-xs font-semibold tracking-widest uppercase text-forest/60">
+                <h2 className="text-xs font-semibold tracking-widest uppercase text-muted">
                   {t(STAGE_CONFIG[stage].labelKey)}
                 </h2>
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-forest/10 text-forest/60 text-xs font-medium">
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-forest/10 text-muted text-xs font-medium">
                   {counts[stage]}
                 </span>
                 <Link
                   href={`/add?stage=${stage}`}
-                  className="ml-auto text-forest/30 hover:text-forest/60 transition-colors"
+                  className="ml-auto text-subtle hover:text-muted transition-colors"
                   aria-label={t("kanban_addBookToStage").replace("{stage}", t(STAGE_CONFIG[stage].labelKey))}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -511,7 +514,7 @@ export default function KanbanBoard({
                 >
                   {itemIds.length === 0 ? (
                     searchQuery.trim() ? (
-                      <p className="text-center text-sm text-forest/30 py-8">{t("noResults")}</p>
+                      <p className="text-center text-sm text-subtle py-8">{t("noResults")}</p>
                     ) : (
                       <EmptyState quote={uniqueQuotes[stage]} />
                     )

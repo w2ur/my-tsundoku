@@ -3,37 +3,36 @@ import type { TranslationKeys } from "./i18n";
 export const STAGES = ["a_acheter", "tsundoku", "bibliotheque", "revendre"] as const;
 export type Stage = (typeof STAGES)[number];
 
+// Glyphs live in StageIcon.tsx as SVG. The `emoji` field this record used to
+// carry was the only label on the mobile tab bar, and emoji cannot be themed,
+// sized, or told apart reliably at nav size.
 export const STAGE_CONFIG: Record<
   Stage,
-  { labelKey: TranslationKeys; swipeLabelKey: TranslationKeys; color: string; bgColor: string; emoji: string }
+  { labelKey: TranslationKeys; swipeLabelKey: TranslationKeys; color: string; bgColor: string }
 > = {
   a_acheter: {
     labelKey: "stage_a_acheter",
     swipeLabelKey: "swipe_a_acheter",
-    color: "text-amber",
+    color: "text-amber-ink",
     bgColor: "bg-amber/10",
-    emoji: "📋",
   },
   tsundoku: {
     labelKey: "stage_tsundoku",
     swipeLabelKey: "swipe_tsundoku",
-    color: "text-forest",
+    color: "text-ink",
     bgColor: "bg-forest/10",
-    emoji: "📚",
   },
   bibliotheque: {
     labelKey: "stage_bibliotheque",
     swipeLabelKey: "swipe_bibliotheque",
-    color: "text-forest",
+    color: "text-ink",
     bgColor: "bg-forest/10",
-    emoji: "📖",
   },
   revendre: {
     labelKey: "stage_revendre",
     swipeLabelKey: "swipe_revendre",
-    color: "text-amber",
+    color: "text-amber-ink",
     bgColor: "bg-amber/10",
-    emoji: "👋",
   },
 };
 

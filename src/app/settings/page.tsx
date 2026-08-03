@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import StageIcon from "@/components/StageIcon";
 import ExportButton from "@/components/ExportButton";
 import ImportButton from "@/components/ImportButton";
 import { useBooksByStage } from "@/hooks/useBooks";
@@ -143,31 +144,31 @@ export default function SettingsPage() {
 
   function renderSyncStatus() {
     if (syncStatus === "syncing") {
-      return <span className="text-xs text-forest/50">{t("sync_syncing")}</span>;
+      return <span className="text-xs text-subtle">{t("sync_syncing")}</span>;
     }
     if (syncStatus === "unsynced" && pendingCount > 0) {
       return (
-        <span className="text-xs text-amber">
+        <span className="text-xs text-amber-ink">
           {t("sync_pending").replace("{count}", String(pendingCount))}
         </span>
       );
     }
     // Unsynced with an empty queue means refusals only — renderSyncFailures says so.
     if (syncStatus === "unsynced") return null;
-    return <span className="text-xs text-forest/50">{t("sync_synced")}</span>;
+    return <span className="text-xs text-subtle">{t("sync_synced")}</span>;
   }
 
   function renderSyncFailures() {
     if (failures.length === 0) return null;
     return (
       <div className="mt-2 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2">
-        <p className="text-xs font-medium text-amber">
+        <p className="text-xs font-medium text-amber-ink">
           {t("sync_rejected").replace("{count}", String(failures.length))}
         </p>
-        <p className="mt-1 text-xs text-forest/60">
+        <p className="mt-1 text-xs text-muted">
           {t("sync_rejectedHint").replace("{message}", failures[0].message)}
         </p>
-        <p className="mt-1 text-xs text-forest/50">
+        <p className="mt-1 text-xs text-subtle">
           {failures.slice(0, 5).map((f) => f.title).join(", ")}
           {failures.length > 5 ? "…" : ""}
         </p>
@@ -190,19 +191,23 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 px-4 py-8 max-w-lg mx-auto w-full">
+      {/* Wider than the form pages on purpose. max-w-lg is right for /add and
+          the book detail (single-column forms want a narrow measure), but this
+          page is a dense config surface — six sections, a stats grid, roadmap
+          and changelog — and at 512px it was a thin ribbon on a desktop. */}
+      <main className="flex-1 px-4 md:px-6 py-8 max-w-lg md:max-w-3xl mx-auto w-full">
         <h1 className="font-serif text-2xl text-forest mb-8">{t("settings_title")}</h1>
 
         {!authLoading && (
           <section className="mb-8">
-            <h2 className="text-sm font-semibold tracking-widest uppercase text-forest/60 mb-3">
+            <h2 className="text-sm font-semibold tracking-widest uppercase text-muted mb-3">
               {t("account_title")}
             </h2>
-            <div className="bg-surface border border-forest/8 rounded-xl p-4">
+            <div className="bg-surface border border-border-subtle rounded-xl p-4">
               {isSignedIn ? (
                 <div className="space-y-3">
                   <div>
-                    <p className="text-sm text-forest/70">
+                    <p className="text-sm text-muted">
                       {t("account_signedInAs")}{" "}
                       <span className="font-medium text-ink">{user?.email}</span>
                     </p>
@@ -212,15 +217,15 @@ export default function SettingsPage() {
                   <div className="flex gap-3">
                     <button
                       onClick={() => signOut()}
-                      className="text-sm text-forest/60 underline hover:text-forest/80 transition-colors"
+                      className="text-sm text-muted underline hover:text-ink transition-colors"
                     >
                       {t("account_signOut")}
                     </button>
-                    <span className="text-forest/20">·</span>
+                    <span className="text-faint">·</span>
                     <button
                       onClick={handleForceResync}
                       disabled={resyncing}
-                      className="text-sm text-forest/60 underline hover:text-forest/80 transition-colors disabled:opacity-50"
+                      className="text-sm text-muted underline hover:text-ink transition-colors disabled:opacity-50"
                     >
                       {resyncing ? t("sync_resyncing") : t("sync_forceResync")}
                     </button>
@@ -228,24 +233,24 @@ export default function SettingsPage() {
                   {deleteState === "idle" && (
                     <button
                       onClick={() => setDeleteState("confirming")}
-                      className="block text-sm text-red-400 hover:text-red-500 transition-colors border border-red-200 rounded-lg px-3 py-1.5"
+                      className="block text-sm text-danger hover:underline transition-colors border border-danger-border rounded-lg px-3 py-2"
                     >
                       {t("account_deleteAccount")}
                     </button>
                   )}
                   {deleteState === "confirming" && (
                     <div className="space-y-2">
-                      <p className="text-xs text-red-500">{t("account_deleteConfirm")}</p>
+                      <p className="text-xs text-danger">{t("account_deleteConfirm")}</p>
                       <div className="flex gap-2">
                         <button
                           onClick={handleDeleteAccount}
-                          className="text-sm text-white bg-red-500 hover:bg-red-600 transition-colors rounded-lg px-3 py-1.5"
+                          className="text-sm text-white bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-3 py-2"
                         >
                           {t("account_deleteAccount")}
                         </button>
                         <button
                           onClick={() => setDeleteState("idle")}
-                          className="text-sm text-forest/60 hover:text-forest/80 transition-colors"
+                          className="text-sm text-muted hover:text-ink transition-colors"
                         >
                           {t("cancel")}
                         </button>
@@ -253,14 +258,14 @@ export default function SettingsPage() {
                     </div>
                   )}
                   {deleteState === "deleting" && (
-                    <p className="text-sm text-forest/50">{t("account_deleting")}</p>
+                    <p className="text-sm text-subtle">{t("account_deleting")}</p>
                   )}
                   {deleteState === "error" && (
                     <div className="space-y-2">
-                      <p className="text-xs text-red-500">{t("account_deleteError")}</p>
+                      <p className="text-xs text-danger">{t("account_deleteError")}</p>
                       <button
                         onClick={() => setDeleteState("idle")}
-                        className="text-sm text-forest/60 underline hover:text-forest/80 transition-colors"
+                        className="text-sm text-muted underline hover:text-ink transition-colors"
                       >
                         {t("cancel")}
                       </button>
@@ -269,7 +274,7 @@ export default function SettingsPage() {
                 </div>
               ) : authState === "sent" || authState === "verifying" || authState === "verify_error" ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-forest/70">
+                  <p className="text-sm text-muted">
                     {t("account_enterCode").replace("{email}", email)}
                   </p>
                   <form onSubmit={handleVerifyCode} className="flex gap-2">
@@ -281,7 +286,7 @@ export default function SettingsPage() {
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
                       placeholder={t("account_otpPlaceholder")}
-                      className="flex-1 text-sm bg-paper border border-forest/15 rounded-lg px-3 py-2 text-ink placeholder:text-forest/30 focus:outline-none focus:border-forest/40 tracking-[0.3em] text-center font-medium"
+                      className="flex-1 text-sm bg-paper border border-border-strong rounded-lg px-3 py-2 text-ink placeholder:text-subtle tracking-[0.3em] text-center font-medium"
                       disabled={authState === "verifying"}
                       autoFocus
                     />
@@ -296,17 +301,17 @@ export default function SettingsPage() {
                     </button>
                   </form>
                   {authState === "verify_error" && (
-                    <p className="text-xs text-red-500">{t("account_verifyError")}</p>
+                    <p className="text-xs text-danger">{t("account_verifyError")}</p>
                   )}
                   <div className="flex gap-3 text-sm">
                     <button
                       onClick={handleResendCode}
                       disabled={authState === "verifying"}
-                      className="text-forest/60 underline hover:text-forest/80 transition-colors disabled:opacity-50"
+                      className="text-muted underline hover:text-ink transition-colors disabled:opacity-50"
                     >
                       {t("account_resendCode")}
                     </button>
-                    <span className="text-forest/20">·</span>
+                    <span className="text-faint">·</span>
                     <button
                       onClick={() => {
                         setEmail("");
@@ -314,7 +319,7 @@ export default function SettingsPage() {
                         setAuthState("idle");
                       }}
                       disabled={authState === "verifying"}
-                      className="text-forest/60 underline hover:text-forest/80 transition-colors disabled:opacity-50"
+                      className="text-muted underline hover:text-ink transition-colors disabled:opacity-50"
                     >
                       {t("account_differentEmail")}
                     </button>
@@ -322,14 +327,14 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-sm text-forest/70">{t("account_signInPrompt")}</p>
+                  <p className="text-sm text-muted">{t("account_signInPrompt")}</p>
                   <form onSubmit={handleSendCode} className="flex gap-2">
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder={t("account_emailPlaceholder")}
-                      className="flex-1 text-sm bg-paper border border-forest/15 rounded-lg px-3 py-2 text-ink placeholder:text-forest/30 focus:outline-none focus:border-forest/40"
+                      className="flex-1 text-sm bg-paper border border-border-strong rounded-lg px-3 py-2 text-ink placeholder:text-subtle"
                       disabled={authState === "sending"}
                     />
                     <button
@@ -350,19 +355,19 @@ export default function SettingsPage() {
 
         {booksByStage && (
           <section className="mb-8">
-            <h2 className="text-sm font-semibold tracking-widest uppercase text-forest/60 mb-3">
+            <h2 className="text-sm font-semibold tracking-widest uppercase text-muted mb-3">
               {t("settings_library")}
             </h2>
-            <div className="bg-surface border border-forest/8 rounded-xl p-4 space-y-2">
+            <div className="bg-surface border border-border-subtle rounded-xl p-4 space-y-2">
               <p className="text-sm text-ink font-medium">
                 {plural(totalBooks, t("settings_bookCount_one"), t("settings_bookCount_other"))}
               </p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-1">
                 {STAGES.map((stage) => (
-                  <div key={stage} className="flex items-center gap-1.5 text-xs text-forest/50">
-                    <span>{STAGE_CONFIG[stage].emoji}</span>
+                  <div key={stage} className="flex items-center gap-1.5 text-xs text-subtle">
+                    <StageIcon stage={stage} size={14} />
                     <span>{t(STAGE_CONFIG[stage].labelKey)}</span>
-                    <span className="ml-auto font-medium text-forest/70">
+                    <span className="ml-auto font-medium text-muted">
                       {booksByStage[stage].length}
                     </span>
                   </div>
@@ -373,7 +378,7 @@ export default function SettingsPage() {
         )}
 
         <section className="space-y-4">
-          <h2 className="text-sm font-semibold tracking-widest uppercase text-forest/60">
+          <h2 className="text-sm font-semibold tracking-widest uppercase text-muted">
             {t("settings_backup")}
           </h2>
           {isSignedIn && (
@@ -381,7 +386,7 @@ export default function SettingsPage() {
               {t("settings_cloudBackupNote")}
             </p>
           )}
-          <p className="text-xs text-forest/40">
+          <p className="text-xs text-subtle">
             {t("settings_backupDesc")}
           </p>
           <ExportButton />
@@ -393,7 +398,7 @@ export default function SettingsPage() {
             onClick={() => setShowPreferences((prev) => !prev)}
             className="flex items-center gap-2 mb-3 group"
           >
-            <h2 className="text-sm font-semibold tracking-widest uppercase text-forest/60">
+            <h2 className="text-sm font-semibold tracking-widest uppercase text-muted">
               {t("preferences_title")}
             </h2>
             <svg
@@ -406,7 +411,7 @@ export default function SettingsPage() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`text-forest/30 transition-transform ${
+              className={`text-subtle transition-transform ${
                 showPreferences ? "rotate-180" : ""
               }`}
             >
@@ -414,16 +419,16 @@ export default function SettingsPage() {
             </svg>
           </button>
           {showPreferences && (
-            <div className="bg-surface border border-forest/8 rounded-xl p-4 space-y-4">
+            <div className="bg-surface border border-border-subtle rounded-xl p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-forest/70">{t("preferences_language")}</span>
-                <div className="flex rounded-lg overflow-hidden border border-forest/15">
+                <span className="text-sm text-muted">{t("preferences_language")}</span>
+                <div className="flex rounded-lg overflow-hidden border border-border-strong">
                   <button
                     onClick={() => setLocale("fr")}
                     className={`w-10 py-1.5 text-xs font-medium transition-colors ${
                       locale === "fr"
                         ? "bg-amber text-white"
-                        : "bg-transparent text-forest/60 hover:bg-forest/5"
+                        : "bg-transparent text-muted hover:bg-forest/5"
                     }`}
                   >
                     FR
@@ -433,7 +438,7 @@ export default function SettingsPage() {
                     className={`w-10 py-1.5 text-xs font-medium transition-colors ${
                       locale === "en"
                         ? "bg-amber text-white"
-                        : "bg-transparent text-forest/60 hover:bg-forest/5"
+                        : "bg-transparent text-muted hover:bg-forest/5"
                     }`}
                   >
                     EN
@@ -441,14 +446,14 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-forest/70">{t("preferences_appearance")}</span>
-                <div className="flex rounded-lg overflow-hidden border border-forest/15">
+                <span className="text-sm text-muted">{t("preferences_appearance")}</span>
+                <div className="flex rounded-lg overflow-hidden border border-border-strong">
                   <button
                     onClick={() => setTheme("light")}
                     className={`w-10 py-1.5 flex items-center justify-center transition-colors ${
                       theme === "light"
                         ? "bg-amber text-white"
-                        : "bg-transparent text-forest/60 hover:bg-forest/5"
+                        : "bg-transparent text-muted hover:bg-forest/5"
                     }`}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -458,7 +463,7 @@ export default function SettingsPage() {
                     className={`w-10 py-1.5 flex items-center justify-center transition-colors ${
                       theme === "dark"
                         ? "bg-amber text-white"
-                        : "bg-transparent text-forest/60 hover:bg-forest/5"
+                        : "bg-transparent text-muted hover:bg-forest/5"
                     }`}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -468,14 +473,14 @@ export default function SettingsPage() {
               {isSignedIn && (
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <p className="text-sm text-forest/70">{t("contribute_toggle")}</p>
-                    <p className="text-xs text-forest/40 mt-0.5">{t("contribute_description")}</p>
+                    <p className="text-sm text-muted">{t("contribute_toggle")}</p>
+                    <p className="text-xs text-subtle mt-0.5">{t("contribute_description")}</p>
                   </div>
                   <button
                     role="switch"
                     aria-checked={contributeToCatalog}
                     onClick={() => handleContributeToggle(!contributeToCatalog)}
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none ${
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors ${
                       contributeToCatalog ? "bg-forest" : "bg-forest/20"
                     }`}
                   >
@@ -496,7 +501,7 @@ export default function SettingsPage() {
             onClick={() => setShowRoadmap((prev) => !prev)}
             className="flex items-center gap-2 mb-3 group"
           >
-            <h2 className="text-sm font-semibold tracking-widest uppercase text-forest/60">
+            <h2 className="text-sm font-semibold tracking-widest uppercase text-muted">
               {t("settings_roadmap")}
             </h2>
             <svg
@@ -509,7 +514,7 @@ export default function SettingsPage() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`text-forest/30 transition-transform ${
+              className={`text-subtle transition-transform ${
                 showRoadmap ? "rotate-180" : ""
               }`}
             >
@@ -517,22 +522,22 @@ export default function SettingsPage() {
             </svg>
           </button>
           {showRoadmap && <>
-            <div className="bg-surface border border-forest/8 rounded-xl p-4 space-y-3">
+            <div className="bg-surface border border-border-subtle rounded-xl p-4 space-y-3">
               {roadmap[locale].map((item) => (
                 <div key={item.title} className="flex gap-3">
                   <span className="text-base leading-relaxed">{item.icon}</span>
                   <div>
                     <p className="text-sm font-medium text-ink">{item.title}</p>
-                    <p className="text-xs text-forest/40">{item.description}</p>
+                    <p className="text-xs text-subtle">{item.description}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-xs text-forest/30 mt-2 italic">
+            <p className="text-xs text-subtle mt-2 italic">
               {t("settings_roadmapDisclaimer")}{" "}
               <a
                 href={`mailto:contact@my-tsundoku.app?subject=${encodeURIComponent("[Tsundoku] " + t("settings_mailtoSubject"))}`}
-                className="underline hover:text-forest/50 transition-colors"
+                className="underline hover:text-ink transition-colors"
               >
                 {t("contactMe")}
               </a>
@@ -545,7 +550,7 @@ export default function SettingsPage() {
             onClick={() => setShowChangelog((prev) => !prev)}
             className="flex items-center gap-2 mb-3 group"
           >
-            <h2 className="text-sm font-semibold tracking-widest uppercase text-forest/60">
+            <h2 className="text-sm font-semibold tracking-widest uppercase text-muted">
               {t("settings_changelog")}
             </h2>
             <svg
@@ -558,7 +563,7 @@ export default function SettingsPage() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className={`text-forest/30 transition-transform ${
+              className={`text-subtle transition-transform ${
                 showChangelog ? "rotate-180" : ""
               }`}
             >
@@ -571,7 +576,7 @@ export default function SettingsPage() {
               return (
                 <div
                   key={entry.version}
-                  className="bg-surface border border-forest/8 rounded-xl overflow-hidden"
+                  className="bg-surface border border-border-subtle rounded-xl overflow-hidden"
                 >
                   <button
                     onClick={() => toggleVersion(entry.version)}
@@ -579,7 +584,7 @@ export default function SettingsPage() {
                   >
                     <span className="text-sm font-medium text-ink">
                       v{entry.version}{" "}
-                      <span className="text-forest/40 font-normal">
+                      <span className="text-subtle font-normal">
                         ·{" "}
                         {new Date(
                           entry.date + "T00:00:00"
@@ -600,7 +605,7 @@ export default function SettingsPage() {
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className={`text-forest/30 transition-transform ${
+                      className={`text-subtle transition-transform ${
                         isExpanded ? "rotate-180" : ""
                       }`}
                     >
@@ -612,9 +617,9 @@ export default function SettingsPage() {
                       {entry.changes[locale].map((change, i) => (
                         <li
                           key={i}
-                          className="text-xs text-forest/50 flex gap-2"
+                          className="text-xs text-subtle flex gap-2"
                         >
-                          <span className="text-forest/20">•</span>
+                          <span className="text-faint">•</span>
                           {change}
                         </li>
                       ))}
@@ -626,11 +631,11 @@ export default function SettingsPage() {
           </div>}
         </section>
 
-        <section className="mt-12 pt-8 border-t border-forest/10">
-          <h2 className="text-sm font-semibold tracking-widest uppercase text-forest/60 mb-2">
+        <section className="mt-12 pt-8 border-t border-border-subtle">
+          <h2 className="text-sm font-semibold tracking-widest uppercase text-muted mb-2">
             {t("settings_about")}
           </h2>
-          <p className="text-xs text-forest/40 leading-relaxed">
+          <p className="text-xs text-subtle leading-relaxed">
             {t("settings_aboutDesc")}
           </p>
           <div className="flex items-center gap-3 mt-3">
@@ -638,7 +643,7 @@ export default function SettingsPage() {
               href="https://github.com/w2ur/tsundoku"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs text-forest/40 hover:text-forest/60 transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs text-subtle hover:text-muted transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />

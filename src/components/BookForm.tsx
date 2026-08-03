@@ -119,7 +119,7 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
   }
 
   const inputClass =
-    "w-full px-3 py-2.5 bg-surface border border-forest/15 rounded-lg text-sm text-ink placeholder:text-forest/30 focus:outline-none focus:ring-2 focus:ring-forest/20 focus:border-forest/30";
+    "w-full px-3 py-2.5 bg-surface border border-border-strong rounded-lg text-sm text-ink placeholder:text-subtle";
 
   return (
     <>
@@ -132,7 +132,7 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-forest/70 mb-1">{t("form_title")}</label>
+        <label className="block text-sm font-medium text-muted mb-1">{t("form_title")}</label>
         <div className="flex gap-2">
           <input
             type="text"
@@ -164,13 +164,13 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
       </div>
 
       {searchResults.length > 0 && (
-        <div className="space-y-1 border border-forest/10 rounded-lg overflow-hidden">
+        <div className="space-y-1 border border-border-subtle rounded-lg overflow-hidden">
           {searchResults.map((result, i) => (
             <button
               key={`${result.title}-${i}`}
               type="button"
               onClick={() => handleResultSelect(result)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-cream transition-colors border-b border-forest/5 last:border-b-0"
+              className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-cream transition-colors border-b border-border-subtle last:border-b-0"
             >
               {result.coverUrl ? (
                 <img src={result.coverUrl} alt="" className="w-8 h-12 object-cover rounded flex-shrink-0" />
@@ -181,7 +181,7 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
               )}
               <div className="min-w-0">
                 <p className="text-sm font-medium text-ink truncate">{result.title}</p>
-                <p className="text-xs text-forest/50 truncate">{result.author}</p>
+                <p className="text-xs text-subtle truncate">{result.author}</p>
               </div>
             </button>
           ))}
@@ -189,13 +189,13 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
       )}
 
       {hasSearched && !searchLoading && searchResults.length === 0 && (
-        <p className="text-xs text-forest/40 text-center">
+        <p className="text-xs text-subtle text-center">
           {t("form_noResults")}{" "}
           <a
             href="https://openlibrary.org/books/add"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:text-forest/60"
+            className="underline hover:text-muted"
           >
             {t("form_addToOpenLibrary")}
           </a>
@@ -205,23 +205,23 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
       {communityResults.length > 0 && (
         <div className="space-y-1">
           <div className="flex items-center gap-2 px-1 pt-2">
-            <span className="text-xs font-medium text-forest/50">{t("community_label")}</span>
-            <span className="text-[10px] text-forest/30">{t("community_disclaimer")}</span>
+            <span className="text-xs font-medium text-subtle">{t("community_label")}</span>
+            <span className="text-[10px] text-subtle">{t("community_disclaimer")}</span>
           </div>
-          <div className="border border-forest/10 rounded-lg overflow-hidden">
+          <div className="border border-border-subtle rounded-lg overflow-hidden">
             {communityResults.map((result) => (
               <button
                 key={result.id}
                 type="button"
                 onClick={() => handleCommunitySelect(result)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-cream transition-colors border-b border-forest/5 last:border-b-0"
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-cream transition-colors border-b border-border-subtle last:border-b-0"
               >
                 <div className="w-8 h-12 rounded overflow-hidden flex-shrink-0">
                   <GeneratedCover title={result.title} author={result.author} width={32} height={48} />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-ink truncate">{result.title}</p>
-                  <p className="text-xs text-forest/50 truncate">{result.author}</p>
+                  <p className="text-xs text-subtle truncate">{result.author}</p>
                 </div>
               </button>
             ))}
@@ -230,7 +230,7 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
       )}
 
       <div>
-        <label className="block text-sm font-medium text-forest/70 mb-1">{t("form_author")}</label>
+        <label className="block text-sm font-medium text-muted mb-1">{t("form_author")}</label>
         <input
           type="text"
           value={author}
@@ -241,7 +241,7 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-forest/70 mb-1">
+        <label className="block text-sm font-medium text-muted mb-1">
           {t("form_cover")}
         </label>
         <input
@@ -256,13 +256,13 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
             <img
               src={coverUrl}
               alt={t("form_coverPreviewAlt")}
-              className="w-16 h-24 object-cover rounded-lg shadow-sm border border-forest/10"
+              className="w-16 h-24 object-cover rounded-lg shadow-sm border border-border-subtle"
               onError={(e) => (e.currentTarget.style.display = "none")}
             />
             <button
               type="button"
               onClick={() => setCoverUrl("")}
-              className="text-xs text-forest/40 underline hover:text-forest/60 mt-1"
+              className="text-xs text-subtle underline hover:text-muted mt-1"
             >
               {t("form_coverChange")}
             </button>
@@ -279,7 +279,7 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex-shrink-0 px-3 py-2.5 border border-forest/15 rounded-lg text-forest/50 hover:bg-cream transition-colors"
+              className="flex-shrink-0 px-3 py-2.5 border border-border-strong rounded-lg text-subtle hover:bg-cream transition-colors"
               title={t("form_coverChooseImage")}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -292,8 +292,8 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-forest/70 mb-1">
-          {t("form_storeUrl")} <span className="font-normal text-forest/40">{t("optional")}</span>
+        <label className="block text-sm font-medium text-muted mb-1">
+          {t("form_storeUrl")} <span className="font-normal text-subtle">{t("optional")}</span>
         </label>
         <input
           type="url"
@@ -305,8 +305,8 @@ export default function BookForm({ initial, onSubmit, submitLabel }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-forest/70 mb-1">
-          {t("form_notes")} <span className="font-normal text-forest/40">{t("optional")}</span>
+        <label className="block text-sm font-medium text-muted mb-1">
+          {t("form_notes")} <span className="font-normal text-subtle">{t("optional")}</span>
         </label>
         <textarea
           value={notes}
