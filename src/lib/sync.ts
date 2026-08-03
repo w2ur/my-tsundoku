@@ -98,6 +98,25 @@ export async function enqueueDelete(bookId: string): Promise<void> {
 
 // ---- Flush (Push) ----
 
+// 408 (timeout) and 429 (rate limit) are 4xx but worth retrying.
+const RETRYABLE_CLIENT_STATUSES = new Set([408, 429]);
+
+/**
+ * Classifies a Supabase response status as a permanent failure (drop the queue
+ * entry) or a transient one (keep it for retry).
+ *
+ * Classify on status, never on the shape of the error object: postgrest-js
+ * reports client-side fetch failures — offline, flaky network, aborted request —
+ * as `{ status: 0, error: { code: "", ... } }`. The `code` key is always present,
+ * so testing for it marked every network blip permanent and silently deleted the
+ * book from the queue. Only PostgREST answering 4xx (RLS denial, constraint
+ * violation, malformed row) means retrying can never help.
+ */
+export function isPermanentSyncError(status: number | undefined): boolean {
+  if (typeof status !== "number") return false;
+  return status >= 400 && status < 500 && !RETRYABLE_CLIENT_STATUSES.has(status);
+}
+
 let flushing = false;
 
 export async function flushQueue(): Promise<{ flushed: number; failed: number }> {
@@ -121,30 +140,41 @@ export async function flushQueue(): Promise<{ flushed: number; failed: number }>
   try {
     for (const entry of entries) {
       try {
-        if (entry.operation === "upsert") {
-          const book = entry.payload as Book;
-          const row = mapBookToSupabase(book, userId);
-          const { error } = await supabase.from("books").upsert(row);
-          if (error) throw error;
-        } else if (entry.operation === "delete") {
-          const now = new Date().toISOString();
-          const { error } = await supabase
-            .from("books")
-            .update({ deleted_at: now, updated_at: now })
-            .eq("id", entry.bookId)
-            .eq("user_id", userId);
-          if (error) throw error;
+        const now = new Date().toISOString();
+        const res =
+          entry.operation === "upsert"
+            ? await supabase
+                .from("books")
+                .upsert(mapBookToSupabase(entry.payload as Book, userId))
+            : await supabase
+                .from("books")
+                .update({ deleted_at: now, updated_at: now })
+                .eq("id", entry.bookId)
+                .eq("user_id", userId);
+
+        if (res.error) {
+          const permanent = isPermanentSyncError(res.status);
+          console.error(
+            "Sync flush error for entry",
+            entry.id,
+            entry.bookId,
+            `status ${res.status}`,
+            permanent ? "(permanent)" : "(transient, will retry)",
+            res.error,
+          );
+          if (permanent) {
+            await db.sync_queue.delete(entry.id!);
+          }
+          failed++;
+          continue;
         }
+
         await db.sync_queue.delete(entry.id!);
         flushed++;
       } catch (err) {
-        // Supabase API errors (constraint violations, RLS) have a `code` — permanent, delete poison pill.
-        // Network/transient errors don't — keep in queue for retry.
-        const isPermanent = err != null && typeof err === "object" && "code" in err;
-        console.error("Sync flush error for entry", entry.id, entry.bookId, isPermanent ? "(permanent)" : "(transient)", err);
-        if (isPermanent) {
-          await db.sync_queue.delete(entry.id!);
-        }
+        // A thrown exception carries no status, so it cannot be shown to be
+        // permanent — keep the entry and retry rather than risk losing a book.
+        console.error("Sync flush threw for entry", entry.id, entry.bookId, "(transient, will retry)", err);
         failed++;
       }
     }
@@ -323,6 +353,89 @@ export async function pullRemoteChanges(): Promise<void> {
 export async function fullSync(): Promise<void> {
   await pullRemoteChanges();
   await flushQueue();
+}
+
+// ---- Reconcile (repair books that never reached the cloud) ----
+
+// PostgREST caps rows per request; page through rather than trust one response.
+const REMOTE_PAGE_SIZE = 1000;
+
+/**
+ * Re-queues every local book the cloud does not have, or has an older copy of.
+ *
+ * The push queue is fire-and-forget: a book is enqueued once when it is added or
+ * edited, and nothing ever re-checks that it landed. Any entry dropped by the
+ * pre-fix classification bug (see isPermanentSyncError) is therefore invisible
+ * and unrecoverable — the book stays local-only forever, on that device only.
+ * This walks local state against remote state and repairs the divergence.
+ *
+ * Call after pullRemoteChanges(), so remote deletes have already been applied
+ * locally and cannot be mistaken for books missing from the cloud.
+ */
+export async function reconcileLocalBooks(): Promise<{ queued: number }> {
+  if (!supabase || !db) return { queued: 0 };
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return { queued: 0 };
+
+  const userId = session.user.id;
+  const remoteUpdatedAt = new Map<string, number>();
+  const tombstoned = new Set<string>();
+
+  for (let page = 0; ; page++) {
+    const { data, error } = await supabase
+      .from("books")
+      .select("id,updated_at,deleted_at")
+      .eq("user_id", userId)
+      .range(page * REMOTE_PAGE_SIZE, (page + 1) * REMOTE_PAGE_SIZE - 1);
+
+    // A partial remote picture would re-upload books that already exist. Upsert
+    // makes that harmless, but bail anyway rather than act on unknown state.
+    if (error || !data) return { queued: 0 };
+
+    for (const row of data) {
+      const id = row.id as string;
+      remoteUpdatedAt.set(id, row.updated_at ? new Date(row.updated_at as string).getTime() : 0);
+      if (row.deleted_at) tombstoned.add(id);
+    }
+
+    if (data.length < REMOTE_PAGE_SIZE) break;
+  }
+
+  const localBooks = await db.books.toArray();
+  const diverged = localBooks.filter((book) => {
+    // Remotely deleted: pullRemoteChanges owns that decision and has already run.
+    if (tombstoned.has(book.id)) return false;
+    const remote = remoteUpdatedAt.get(book.id);
+    return remote === undefined || book.updatedAt > remote;
+  });
+
+  for (const book of diverged) {
+    await db.sync_queue.add({
+      bookId: book.id,
+      operation: "upsert" as const,
+      payload: book,
+      createdAt: Date.now(),
+    });
+  }
+
+  return { queued: diverged.length };
+}
+
+/**
+ * Full repair: drop the pull cursor, re-pull everything, then push whatever the
+ * cloud is missing. Backs the "force resync" action in Settings.
+ */
+export async function forceReconcile(
+  userId: string,
+): Promise<{ queued: number; flushed: number; failed: number }> {
+  resetLocalSyncCursor(userId);
+  await pullRemoteChanges();
+  const { queued } = await reconcileLocalBooks();
+  const { flushed, failed } = await flushQueue();
+  return { queued, flushed, failed };
 }
 
 // ---- Online/Offline listeners ----

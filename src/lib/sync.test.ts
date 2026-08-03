@@ -14,6 +14,7 @@ const { mockDb, mockSupabase } = vi.hoisted(() => ({
       get: vi.fn().mockResolvedValue(undefined),
       put: vi.fn().mockResolvedValue(undefined),
       delete: vi.fn().mockResolvedValue(undefined),
+      toArray: vi.fn().mockResolvedValue([]),
     },
   },
   mockSupabase: {
@@ -38,6 +39,8 @@ import {
   pullRemoteChanges,
   startSyncListeners,
   reconcileLegacyTombstones,
+  isPermanentSyncError,
+  reconcileLocalBooks,
 } from "./sync";
 
 // ---- Helpers ----
@@ -45,7 +48,7 @@ import {
 /** Creates a chainable, awaitable mock mimicking the Supabase query builder. */
 function mockChain(result: Record<string, unknown> = { data: null, error: null }) {
   const chain: Record<string, unknown> = {};
-  for (const method of ["select", "eq", "gt", "upsert", "update"]) {
+  for (const method of ["select", "eq", "gt", "upsert", "update", "range"]) {
     (chain as Record<string, unknown>)[method] = vi.fn().mockReturnValue(chain);
   }
   chain.then = (
@@ -443,8 +446,10 @@ describe("flushQueue", () => {
       { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
       { id: 2, bookId: "b2", operation: "upsert", payload: { ...testBook, id: "b2" }, createdAt: Date.now() },
     ]);
-    // Supabase API errors have a `code` property — treated as permanent
-    mockSupabase.from.mockReturnValue(mockChain({ error: { message: "constraint violation", code: "23505" } }));
+    // PostgREST answered 4xx — retrying can never help, so drop the entry
+    mockSupabase.from.mockReturnValue(
+      mockChain({ error: { message: "constraint violation", code: "23505" }, status: 409 }),
+    );
 
     const result = await flushQueue();
 
@@ -465,7 +470,7 @@ describe("flushQueue", () => {
     mockDb.sync_queue.toArray.mockResolvedValueOnce([
       { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
     ]);
-    // Network errors don't have a `code` — treated as transient
+    // A thrown exception carries no status — treated as transient
     const throwingChain = mockChain({ error: null });
     (throwingChain.upsert as ReturnType<typeof vi.fn>).mockImplementation(() => {
       throw new TypeError("Failed to fetch");
@@ -494,7 +499,10 @@ describe("flushQueue", () => {
     ]);
     // First call succeeds, second fails with permanent error
     const successChain = mockChain({ error: null });
-    const errorChain = mockChain({ error: { message: "constraint violation", code: "23505" } });
+    const errorChain = mockChain({
+      error: { message: "constraint violation", code: "23505" },
+      status: 409,
+    });
     mockSupabase.from
       .mockReturnValueOnce(successChain)
       .mockReturnValueOnce(errorChain)
@@ -1015,5 +1023,178 @@ describe("startSyncListeners", () => {
 
     removeSpy.mockRestore();
     clearSpy.mockRestore();
+  });
+});
+
+describe("isPermanentSyncError", () => {
+  it("classifies a client-side fetch failure as transient", () => {
+    // Regression: 2dd5e10 — postgrest-js returns { status: 0, error: { code: "" } }
+    // for offline/flaky-network failures. The old check was `"code" in err`, and
+    // the key is always present, so every network blip was called permanent.
+    expect(isPermanentSyncError(0)).toBe(false);
+  });
+
+  it("classifies PostgREST 4xx as permanent", () => {
+    expect(isPermanentSyncError(400)).toBe(true);
+    expect(isPermanentSyncError(401)).toBe(true);
+    expect(isPermanentSyncError(403)).toBe(true);
+    expect(isPermanentSyncError(409)).toBe(true);
+  });
+
+  it("classifies timeout and rate-limit as transient despite being 4xx", () => {
+    expect(isPermanentSyncError(408)).toBe(false);
+    expect(isPermanentSyncError(429)).toBe(false);
+  });
+
+  it("classifies server errors as transient", () => {
+    expect(isPermanentSyncError(500)).toBe(false);
+    expect(isPermanentSyncError(503)).toBe(false);
+  });
+
+  it("classifies a missing status as transient", () => {
+    expect(isPermanentSyncError(undefined)).toBe(false);
+  });
+});
+
+describe("flushQueue — network failure retention", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("keeps the queue entry when postgrest reports a fetch failure", async () => {
+    // Regression: 2dd5e10 — this exact response shape silently deleted the book
+    // from the sync queue, losing it permanently on the only device that had it.
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    mockSupabase.auth.getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: "u1" } } },
+    });
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(
+      mockChain({
+        error: {
+          message: "TypeError: Failed to fetch",
+          details: "",
+          hint: "",
+          code: "",
+        },
+        status: 0,
+        data: null,
+      }),
+    );
+
+    const result = await flushQueue();
+
+    expect(mockDb.sync_queue.delete).not.toHaveBeenCalled();
+    expect(result).toEqual({ flushed: 0, failed: 1 });
+
+    vi.restoreAllMocks();
+  });
+});
+
+describe("reconcileLocalBooks", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function signedIn() {
+    mockSupabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: { id: "u1" } } },
+    });
+  }
+
+  it("queues local books the cloud has never seen", async () => {
+    signedIn();
+    mockSupabase.from.mockReturnValue(mockChain({ data: [], error: null }));
+    mockDb.books.toArray.mockResolvedValueOnce([testBook]);
+
+    const { queued } = await reconcileLocalBooks();
+
+    expect(queued).toBe(1);
+    expect(mockDb.sync_queue.add).toHaveBeenCalledWith(
+      expect.objectContaining({ bookId: "b1", operation: "upsert" }),
+    );
+  });
+
+  it("skips books the cloud already has at the same version", async () => {
+    signedIn();
+    mockSupabase.from.mockReturnValue(
+      mockChain({
+        data: [{ id: "b1", updated_at: new Date(testBook.updatedAt).toISOString(), deleted_at: null }],
+        error: null,
+      }),
+    );
+    mockDb.books.toArray.mockResolvedValueOnce([testBook]);
+
+    const { queued } = await reconcileLocalBooks();
+
+    expect(queued).toBe(0);
+    expect(mockDb.sync_queue.add).not.toHaveBeenCalled();
+  });
+
+  it("queues books whose local copy is newer than the cloud copy", async () => {
+    signedIn();
+    mockSupabase.from.mockReturnValue(
+      mockChain({
+        data: [
+          {
+            id: "b1",
+            updated_at: new Date(testBook.updatedAt - 10_000).toISOString(),
+            deleted_at: null,
+          },
+        ],
+        error: null,
+      }),
+    );
+    mockDb.books.toArray.mockResolvedValueOnce([testBook]);
+
+    const { queued } = await reconcileLocalBooks();
+
+    expect(queued).toBe(1);
+  });
+
+  it("does not resurrect books tombstoned in the cloud", async () => {
+    signedIn();
+    mockSupabase.from.mockReturnValue(
+      mockChain({
+        data: [
+          {
+            id: "b1",
+            updated_at: new Date(testBook.updatedAt).toISOString(),
+            deleted_at: new Date(testBook.updatedAt).toISOString(),
+          },
+        ],
+        error: null,
+      }),
+    );
+    mockDb.books.toArray.mockResolvedValueOnce([testBook]);
+
+    const { queued } = await reconcileLocalBooks();
+
+    expect(queued).toBe(0);
+    expect(mockDb.sync_queue.add).not.toHaveBeenCalled();
+  });
+
+  it("queues nothing when the remote read fails", async () => {
+    signedIn();
+    mockSupabase.from.mockReturnValue(
+      mockChain({ data: null, error: { message: "network down" } }),
+    );
+    mockDb.books.toArray.mockResolvedValueOnce([testBook]);
+
+    const { queued } = await reconcileLocalBooks();
+
+    expect(queued).toBe(0);
+    expect(mockDb.sync_queue.add).not.toHaveBeenCalled();
+  });
+
+  it("queues nothing when signed out", async () => {
+    mockSupabase.auth.getSession.mockResolvedValue({ data: { session: null } });
+
+    const { queued } = await reconcileLocalBooks();
+
+    expect(queued).toBe(0);
   });
 });

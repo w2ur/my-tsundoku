@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.3.0",
+    date: "2026-08-03",
+    changes: {
+      fr: [
+        "Correction majeure : une coupure réseau pendant l'envoi d'un livre vers le cloud pouvait le supprimer définitivement de la file de synchronisation — le livre restait alors sur un seul appareil, sans aucun message",
+        "« Forcer la resynchronisation » renvoie maintenant vers le cloud tous les livres qui n'y sont jamais arrivés, au lieu de seulement récupérer les nouveautés",
+      ],
+      en: [
+        "Major fix: a network drop while uploading a book could permanently remove it from the sync queue — the book then stayed on a single device, with no warning",
+        "\"Force resync\" now re-uploads every book that never made it to the cloud, instead of only fetching what's new",
+      ],
+    },
+  },
+  {
     version: "2.2.2",
     date: "2026-07-26",
     changes: {

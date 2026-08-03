@@ -13,7 +13,7 @@ import { useTranslation, useTheme } from "@/lib/preferences";
 import { plural } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { getSyncStatus, onSyncStatusChange, resetLocalSyncCursor, fullSync, type SyncStatus } from "@/lib/sync";
+import { getSyncStatus, onSyncStatusChange, forceReconcile, type SyncStatus } from "@/lib/sync";
 import { deleteAccount } from "@/lib/account";
 
 export default function SettingsPage() {
@@ -108,9 +108,11 @@ export default function SettingsPage() {
   async function handleForceResync() {
     if (!user || resyncing) return;
     setResyncing(true);
-    resetLocalSyncCursor(user.id);
-    await fullSync();
-    setResyncing(false);
+    try {
+      await forceReconcile(user.id);
+    } finally {
+      setResyncing(false);
+    }
   }
 
   useEffect(() => {
