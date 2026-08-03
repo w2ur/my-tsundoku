@@ -146,6 +146,8 @@ const fr = {
   sync_lastSynced: "Dernière sync il y a {time}",
   sync_forceResync: "Forcer la resynchronisation",
   sync_resyncing: "Resynchronisation...",
+  sync_rejected: "{count} livre(s) refusé(s) par le cloud",
+  sync_rejectedHint: "Ils restent sur cet appareil uniquement. Erreur : {message}",
   migration_title: "Transférer vos livres ?",
   migration_message: "Vous avez {count} livre(s) sur cet appareil. Les transférer vers votre compte ?",
   migration_upload: "Oui, transférer",

@@ -9,10 +9,24 @@ export interface SyncQueueEntry {
   createdAt: number;
 }
 
+/**
+ * A push the cloud refused outright (4xx). The queue entry is dropped — retrying
+ * a rejection cannot succeed — so this is the only remaining trace that the book
+ * exists on this device and nowhere else.
+ */
+export interface SyncFailure {
+  bookId: string;
+  title: string;
+  status: number;
+  message: string;
+  at: number;
+}
+
 class TsundokuDB extends Dexie {
   books!: EntityTable<Book, "id">;
   settings!: EntityTable<{ key: string; value: unknown }, "key">;
   sync_queue!: EntityTable<SyncQueueEntry, "id">;
+  sync_failures!: EntityTable<SyncFailure, "bookId">;
 
   constructor() {
     super("tsundoku");
@@ -51,6 +65,12 @@ class TsundokuDB extends Dexie {
       books: "id, stage, title, author, createdAt, updatedAt, position",
       settings: "key",
       sync_queue: "++id, bookId, operation, createdAt",
+    });
+    this.version(7).stores({
+      books: "id, stage, title, author, createdAt, updatedAt, position",
+      settings: "key",
+      sync_queue: "++id, bookId, operation, createdAt",
+      sync_failures: "bookId, at",
     });
   }
 }

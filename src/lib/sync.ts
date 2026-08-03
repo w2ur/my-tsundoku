@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, type SyncFailure } from "./db";
 import { supabase } from "./supabase";
 import type { Book, Stage } from "./types";
 
@@ -70,6 +70,32 @@ export function getSyncStatus(): SyncStatus {
 function setStatus(status: SyncStatus) {
   currentStatus = status;
   listeners.forEach((fn) => fn(status));
+}
+
+/**
+ * Recomputes the status from what is actually on disk.
+ *
+ * `currentStatus` is module state initialised to "synced", so before this
+ * existed every page load reported a clean sync no matter how many writes were
+ * queued or refused — the UI could not have warned about either. Call on boot.
+ */
+export async function refreshSyncStatus(): Promise<{
+  pending: number;
+  rejected: number;
+}> {
+  if (typeof window === "undefined" || !db) return { pending: 0, rejected: 0 };
+
+  const pending = await db.sync_queue.count();
+  const rejected = await db.sync_failures.count();
+  setStatus(pending > 0 || rejected > 0 ? "unsynced" : "synced");
+  return { pending, rejected };
+}
+
+/** Books the cloud refused, newest first. Empty is the healthy case. */
+export async function getSyncFailures(): Promise<SyncFailure[]> {
+  if (typeof window === "undefined" || !db) return [];
+  const failures = await db.sync_failures.toArray();
+  return failures.sort((a, b) => b.at - a.at);
 }
 
 // ---- Queue Operations ----
@@ -163,6 +189,15 @@ export async function flushQueue(): Promise<{ flushed: number; failed: number }>
             res.error,
           );
           if (permanent) {
+            // Retrying cannot help, so the entry goes — but record the refusal,
+            // or the book silently exists on this device only, forever.
+            await db.sync_failures.put({
+              bookId: entry.bookId,
+              title: (entry.payload as Book).title ?? entry.bookId,
+              status: res.status,
+              message: res.error.message ?? "",
+              at: Date.now(),
+            });
             await db.sync_queue.delete(entry.id!);
           }
           failed++;
@@ -170,6 +205,7 @@ export async function flushQueue(): Promise<{ flushed: number; failed: number }>
         }
 
         await db.sync_queue.delete(entry.id!);
+        await db.sync_failures.delete(entry.bookId);
         flushed++;
       } catch (err) {
         // A thrown exception carries no status, so it cannot be shown to be
@@ -184,7 +220,9 @@ export async function flushQueue(): Promise<{ flushed: number; failed: number }>
       last_synced_at: new Date().toISOString(),
     });
 
-    setStatus(failed > 0 ? "unsynced" : "synced");
+    // Derive from disk rather than from `failed`: a rejection recorded on an
+    // earlier run must keep the status dirty even if this run pushed cleanly.
+    await refreshSyncStatus();
   } finally {
     flushing = false;
   }

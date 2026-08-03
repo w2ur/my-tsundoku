@@ -3,7 +3,8 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import { NetworkOnly, Serwist } from "serwist";
+import { isSupabaseApiRequest } from "../lib/sw-routes";
 
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
@@ -18,7 +19,15 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  // Must precede defaultCache: its final cross-origin rule would otherwise
+  // serve Supabase reads from a 1-hour cache. First match wins.
+  runtimeCaching: [
+    {
+      matcher: ({ url }) => isSupabaseApiRequest(url),
+      handler: new NetworkOnly(),
+    },
+    ...defaultCache,
+  ],
   fallbacks: {
     entries: [
       {

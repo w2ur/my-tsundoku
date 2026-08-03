@@ -9,6 +9,13 @@ const { mockDb, mockSupabase } = vi.hoisted(() => ({
       add: vi.fn().mockResolvedValue(undefined),
       toArray: vi.fn().mockResolvedValue([]),
       delete: vi.fn().mockResolvedValue(undefined),
+      count: vi.fn().mockResolvedValue(0),
+    },
+    sync_failures: {
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(undefined),
+      toArray: vi.fn().mockResolvedValue([]),
+      count: vi.fn().mockResolvedValue(0),
     },
     books: {
       get: vi.fn().mockResolvedValue(undefined),
@@ -41,6 +48,8 @@ import {
   reconcileLegacyTombstones,
   isPermanentSyncError,
   reconcileLocalBooks,
+  refreshSyncStatus,
+  getSyncFailures,
 } from "./sync";
 
 // ---- Helpers ----
@@ -450,6 +459,8 @@ describe("flushQueue", () => {
     mockSupabase.from.mockReturnValue(
       mockChain({ error: { message: "constraint violation", code: "23505" }, status: 409 }),
     );
+    // Both entries end up in the failure log, which is what keeps status dirty
+    mockDb.sync_failures.count.mockResolvedValueOnce(2);
 
     const result = await flushQueue();
 
@@ -478,6 +489,8 @@ describe("flushQueue", () => {
     mockSupabase.from
       .mockReturnValueOnce(throwingChain) // books table — throws
       .mockReturnValue(mockChain({ error: null })); // sync_metadata — normal
+    // The entry was kept, so the queue is still non-empty after the flush
+    mockDb.sync_queue.count.mockResolvedValueOnce(1);
 
     const result = await flushQueue();
 
@@ -507,6 +520,7 @@ describe("flushQueue", () => {
       .mockReturnValueOnce(successChain)
       .mockReturnValueOnce(errorChain)
       .mockReturnValue(mockChain({ error: null })); // sync_metadata
+    mockDb.sync_failures.count.mockResolvedValueOnce(1);
 
     const result = await flushQueue();
 
@@ -1196,5 +1210,116 @@ describe("reconcileLocalBooks", () => {
     const { queued } = await reconcileLocalBooks();
 
     expect(queued).toBe(0);
+  });
+});
+
+describe("sync failure log", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDb.sync_queue.count.mockResolvedValue(0);
+    mockDb.sync_failures.count.mockResolvedValue(0);
+    mockDb.sync_failures.toArray.mockResolvedValue([]);
+  });
+
+  it("records a refused push so the book is not lost silently", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(
+      mockChain({
+        error: { message: 'invalid input syntax for type uuid: "w-reco-000"', code: "22P02" },
+        status: 400,
+      }),
+    );
+
+    await flushQueue();
+
+    expect(mockDb.sync_failures.put).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bookId: "b1",
+        title: "Test",
+        status: 400,
+        message: 'invalid input syntax for type uuid: "w-reco-000"',
+      }),
+    );
+    vi.restoreAllMocks();
+  });
+
+  it("does not record a transient failure — it stays queued instead", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(
+      mockChain({ error: { message: "TypeError: Failed to fetch", code: "" }, status: 0 }),
+    );
+
+    await flushQueue();
+
+    expect(mockDb.sync_failures.put).not.toHaveBeenCalled();
+    expect(mockDb.sync_queue.delete).not.toHaveBeenCalled();
+    vi.restoreAllMocks();
+  });
+
+  it("clears a book's recorded failure once it pushes successfully", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+
+    await flushQueue();
+
+    expect(mockDb.sync_failures.delete).toHaveBeenCalledWith("b1");
+  });
+
+  it("getSyncFailures returns newest first", async () => {
+    mockDb.sync_failures.toArray.mockResolvedValueOnce([
+      { bookId: "old", title: "Old", status: 400, message: "m", at: 1000 },
+      { bookId: "new", title: "New", status: 400, message: "m", at: 5000 },
+    ]);
+
+    const failures = await getSyncFailures();
+
+    expect(failures.map((f) => f.bookId)).toEqual(["new", "old"]);
+  });
+});
+
+describe("refreshSyncStatus", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("reports unsynced when writes are still queued", async () => {
+    mockDb.sync_queue.count.mockResolvedValueOnce(3);
+    mockDb.sync_failures.count.mockResolvedValueOnce(0);
+
+    const result = await refreshSyncStatus();
+
+    expect(result).toEqual({ pending: 3, rejected: 0 });
+    expect(getSyncStatus()).toBe("unsynced");
+  });
+
+  it("reports unsynced when the queue is empty but books were refused", async () => {
+    // Regression: currentStatus is module state initialised to "synced", so a
+    // reload used to report a clean sync while books sat permanently refused.
+    mockDb.sync_queue.count.mockResolvedValueOnce(0);
+    mockDb.sync_failures.count.mockResolvedValueOnce(2);
+
+    const result = await refreshSyncStatus();
+
+    expect(result).toEqual({ pending: 0, rejected: 2 });
+    expect(getSyncStatus()).toBe("unsynced");
+  });
+
+  it("reports synced only when nothing is queued and nothing was refused", async () => {
+    mockDb.sync_queue.count.mockResolvedValueOnce(0);
+    mockDb.sync_failures.count.mockResolvedValueOnce(0);
+
+    expect(await refreshSyncStatus()).toEqual({ pending: 0, rejected: 0 });
+    expect(getSyncStatus()).toBe("synced");
   });
 });

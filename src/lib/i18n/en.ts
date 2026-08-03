@@ -146,6 +146,8 @@ const en: Record<TranslationKeys, string> = {
   sync_lastSynced: "Last synced {time} ago",
   sync_forceResync: "Force resync",
   sync_resyncing: "Resyncing...",
+  sync_rejected: "{count} book(s) refused by the cloud",
+  sync_rejectedHint: "They stay on this device only. Error: {message}",
   migration_title: "Transfer your books?",
   migration_message: "You have {count} book(s) on this device. Transfer them to your account?",
   migration_upload: "Yes, transfer",

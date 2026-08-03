@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import ExportButton from "@/components/ExportButton";
@@ -13,7 +13,15 @@ import { useTranslation, useTheme } from "@/lib/preferences";
 import { plural } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { getSyncStatus, onSyncStatusChange, forceReconcile, type SyncStatus } from "@/lib/sync";
+import {
+  getSyncStatus,
+  onSyncStatusChange,
+  forceReconcile,
+  refreshSyncStatus,
+  getSyncFailures,
+  type SyncStatus,
+} from "@/lib/sync";
+import type { SyncFailure } from "@/lib/db";
 import { deleteAccount } from "@/lib/account";
 
 export default function SettingsPage() {
@@ -111,25 +119,60 @@ export default function SettingsPage() {
     try {
       await forceReconcile(user.id);
     } finally {
+      await refreshSyncDetails();
       setResyncing(false);
     }
   }
+
+  const [pendingCount, setPendingCount] = useState(0);
+  const [failures, setFailures] = useState<SyncFailure[]>([]);
+
+  const refreshSyncDetails = useCallback(async () => {
+    const { pending } = await refreshSyncStatus();
+    setPendingCount(pending);
+    setFailures(await getSyncFailures());
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onSyncStatusChange((status) => {
       setSyncStatus(status);
     });
+    refreshSyncDetails();
     return unsubscribe;
-  }, []);
+  }, [refreshSyncDetails]);
 
   function renderSyncStatus() {
     if (syncStatus === "syncing") {
       return <span className="text-xs text-forest/50">{t("sync_syncing")}</span>;
     }
-    if (syncStatus === "unsynced") {
-      return <span className="text-xs text-amber">{t("sync_pending").replace("{count}", "—")}</span>;
+    if (syncStatus === "unsynced" && pendingCount > 0) {
+      return (
+        <span className="text-xs text-amber">
+          {t("sync_pending").replace("{count}", String(pendingCount))}
+        </span>
+      );
     }
+    // Unsynced with an empty queue means refusals only — renderSyncFailures says so.
+    if (syncStatus === "unsynced") return null;
     return <span className="text-xs text-forest/50">{t("sync_synced")}</span>;
+  }
+
+  function renderSyncFailures() {
+    if (failures.length === 0) return null;
+    return (
+      <div className="mt-2 rounded-lg border border-amber/40 bg-amber/5 px-3 py-2">
+        <p className="text-xs font-medium text-amber">
+          {t("sync_rejected").replace("{count}", String(failures.length))}
+        </p>
+        <p className="mt-1 text-xs text-forest/60">
+          {t("sync_rejectedHint").replace("{message}", failures[0].message)}
+        </p>
+        <p className="mt-1 text-xs text-forest/50">
+          {failures.slice(0, 5).map((f) => f.title).join(", ")}
+          {failures.length > 5 ? "…" : ""}
+        </p>
+      </div>
+    );
   }
 
   const toggleVersion = (version: string) => {
@@ -164,6 +207,7 @@ export default function SettingsPage() {
                       <span className="font-medium text-ink">{user?.email}</span>
                     </p>
                     <div className="mt-1">{renderSyncStatus()}</div>
+                    {renderSyncFailures()}
                   </div>
                   <div className="flex gap-3">
                     <button

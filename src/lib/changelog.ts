@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.4.0",
+    date: "2026-08-03",
+    changes: {
+      fr: [
+        "Les livres que le cloud refuse sont maintenant signalés dans Réglages, avec la raison — ils disparaissaient silencieusement",
+        "L'état de synchronisation survit au rechargement : il affiche le vrai nombre de modifications en attente au lieu de repartir sur « Synchronisé »",
+        "Correction : les lectures Supabase ne passent plus par le cache hors ligne, qui pouvait renvoyer une liste périmée et faire manquer des livres",
+      ],
+      en: [
+        "Books the cloud refuses are now reported in Settings, with the reason — they used to vanish silently",
+        "Sync status survives a reload: it shows the real number of pending changes instead of resetting to \"Synced\"",
+        "Fix: Supabase reads no longer go through the offline cache, which could return a stale list and cause books to be missed",
+      ],
+    },
+  },
+  {
     version: "2.3.0",
     date: "2026-08-03",
     changes: {
