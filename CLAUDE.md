@@ -73,6 +73,7 @@ AGPL-3.0-only. Commercial licensing available — contact w@revah.paris.
 - Supabase SSR guard: `supabase` client is `null` on server (same pattern as Dexie)
 - Sync is local-first: Dexie remains source of truth, Supabase is backup/sync layer
 - Community catalog contributions are anonymous — `community_books` has no `user_id`
+- Book ids are client-minted strings, not uuids. `addBook` uses uuidv4, but `importBooks` preserves whatever ids the imported file carries, so any format can reach the cloud. `books.id` is therefore `text` (migration 004) — do not narrow it back to `uuid`: a non-uuid id makes Postgres reject the row with 22P02, a permanent 400 that strands the book on one device forever
 - Cover strategy: OL URL > user photo (cropped, max 400px JPEG) > generated SVG. Community catalog uses generated covers only
 - Theme colors: paper `#FAF8F5`, forest `#2D4A3E`, amber `#C4956A`, cream `#F5F0EB`. Dark mode overrides via `[data-theme="dark"]` in globals.css
 - i18n: homegrown, no dependencies. `fr.ts` defines canonical shape, `en.ts` satisfies `Record<TranslationKeys, string>`. Use `useTranslation()` hook for all UI strings. Light mode and French are defaults — no system preference detection
