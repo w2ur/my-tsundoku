@@ -79,6 +79,8 @@ const en: Record<TranslationKeys, string> = {
   import_ok: "OK",
   import_retry: "Retry",
   import_booksFound_one: "1 book found.",
+  import_rejected_one: "1 book skipped (cannot be synced)",
+  import_rejected_other: "{count} books skipped (cannot be synced)",
   import_booksFound_other: "{count} books found.",
   import_booksImported_one: "1 book imported",
   import_booksImported_other: "{count} books imported",

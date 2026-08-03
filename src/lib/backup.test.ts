@@ -107,3 +107,46 @@ describe("parseBackup", () => {
     expect(result.error).toBeTruthy();
   });
 });
+
+describe("parseBackup — cloud-schema rejections", () => {
+  function file(books: unknown[]): string {
+    return JSON.stringify({ version: 1, exportedAt: "2026-08-03T00:00:00.000Z", books });
+  }
+
+  const good = {
+    id: "b1",
+    title: "Dune",
+    author: "Frank Herbert",
+    stage: "tsundoku",
+    coverUrl: "",
+    position: 0,
+    createdAt: 1700000000000,
+    updatedAt: 1700000000000,
+  };
+
+  it("reports records the cloud would refuse instead of dropping them silently", () => {
+    const result = parseBackup(
+      file([good, { ...good, id: "b2", author: undefined }, { ...good, id: "b3", stage: "later" }]),
+    );
+
+    expect(result.books).toHaveLength(1);
+    expect(result.rejected).toEqual([
+      { label: "Dune", reason: "missing author" },
+      { label: "Dune", reason: 'invalid stage "later"' },
+    ]);
+  });
+
+  it("rejects records whose dates cannot be serialized", () => {
+    const result = parseBackup(file([{ ...good, createdAt: undefined }]));
+
+    expect(result.books).toHaveLength(0);
+    expect(result.rejected).toEqual([{ label: "Dune", reason: "invalid createdAt" }]);
+    expect(result.error).toBeDefined();
+  });
+
+  it("reports no rejections for a clean file", () => {
+    const result = parseBackup(file([good]));
+    expect(result.books).toHaveLength(1);
+    expect(result.rejected).toEqual([]);
+  });
+});

@@ -1323,3 +1323,67 @@ describe("refreshSyncStatus", () => {
     expect(getSyncStatus()).toBe("synced");
   });
 });
+
+describe("flushQueue — unsyncable payload guard", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockDb.sync_queue.count.mockResolvedValue(0);
+    mockDb.sync_failures.count.mockResolvedValue(0);
+  });
+
+  it("records and drops a book the cloud can never accept, without calling Supabase", async () => {
+    // An invalid date makes mapBookToSupabase throw, and a throw is classified
+    // transient — so this entry would otherwise be retried on every flush for
+    // ever, never pushed and never reported.
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      {
+        id: 1,
+        bookId: "b1",
+        operation: "upsert",
+        payload: { ...testBook, createdAt: NaN },
+        createdAt: Date.now(),
+      },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+
+    const result = await flushQueue();
+
+    expect(mockSupabase.from).not.toHaveBeenCalledWith("books");
+    expect(mockDb.sync_failures.put).toHaveBeenCalledWith(
+      expect.objectContaining({ bookId: "b1", message: "invalid createdAt" }),
+    );
+    expect(mockDb.sync_queue.delete).toHaveBeenCalledWith(1);
+    expect(result).toEqual({ flushed: 0, failed: 1 });
+
+    vi.restoreAllMocks();
+  });
+
+  it("lets a valid book through to Supabase", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+
+    const result = await flushQueue();
+
+    expect(mockSupabase.from).toHaveBeenCalledWith("books");
+    expect(mockDb.sync_failures.put).not.toHaveBeenCalled();
+    expect(result).toEqual({ flushed: 1, failed: 0 });
+  });
+
+  it("does not validate delete entries — their payload is only an id", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "delete", payload: { id: "b1" }, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+
+    const result = await flushQueue();
+
+    expect(mockDb.sync_failures.put).not.toHaveBeenCalled();
+    expect(result).toEqual({ flushed: 1, failed: 0 });
+  });
+});

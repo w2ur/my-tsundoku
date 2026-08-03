@@ -77,6 +77,8 @@ const fr = {
   import_ok: "OK",
   import_retry: "Réessayer",
   import_booksFound_one: "1 livre trouvé.",
+  import_rejected_one: "1 livre ignoré (incompatible avec la synchronisation)",
+  import_rejected_other: "{count} livres ignorés (incompatibles avec la synchronisation)",
   import_booksFound_other: "{count} livres trouvés.",
   import_booksImported_one: "1 livre importé",
   import_booksImported_other: "{count} livres importés",

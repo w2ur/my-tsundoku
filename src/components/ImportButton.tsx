@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { parseBackup } from "@/lib/backup";
+import type { RejectedRecord } from "@/lib/book-validation";
 import { importBooks } from "@/lib/books";
 import { useTranslation } from "@/lib/preferences";
 import { plural } from "@/lib/i18n";
@@ -12,6 +13,7 @@ export default function ImportButton() {
   const [message, setMessage] = useState("");
   const [bookCount, setBookCount] = useState(0);
   const [pendingBooks, setPendingBooks] = useState<Parameters<typeof importBooks>[0] | null>(null);
+  const [rejected, setRejected] = useState<RejectedRecord[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -21,6 +23,7 @@ export default function ImportButton() {
     const reader = new FileReader();
     reader.onload = () => {
       const result = parseBackup(reader.result as string);
+      setRejected(result.rejected);
       if (result.error) {
         setMessage(result.error);
         setStatus("error");
@@ -64,6 +67,23 @@ export default function ImportButton() {
           <p className="text-sm text-ink">
             {plural(bookCount, t("import_booksFound_one"), t("import_booksFound_other"))}
           </p>
+          {rejected.length > 0 && (
+            <div className="rounded-lg border border-amber/40 bg-amber/5 px-3 py-2">
+              <p className="text-xs font-medium text-amber">
+                {plural(rejected.length, t("import_rejected_one"), t("import_rejected_other"))}
+              </p>
+              <ul className="mt-1 space-y-0.5 text-xs text-forest/60">
+                {rejected.slice(0, 5).map((r, i) => (
+                  <li key={`${r.label}-${i}`}>
+                    {r.label} — {r.reason}
+                  </li>
+                ))}
+              </ul>
+              {rejected.length > 5 && (
+                <p className="mt-1 text-xs text-forest/40">…</p>
+              )}
+            </div>
+          )}
           <div className="flex gap-2">
             <button
               onClick={() => handleImport("merge")}
@@ -99,6 +119,15 @@ export default function ImportButton() {
       {status === "error" && (
         <div className="p-3 bg-error-bg border border-error-border rounded-lg text-sm text-error-text text-center">
           {message}
+          {rejected.length > 0 && (
+            <ul className="mt-2 space-y-0.5 text-xs">
+              {rejected.slice(0, 5).map((r, i) => (
+                <li key={`${r.label}-${i}`}>
+                  {r.label} — {r.reason}
+                </li>
+              ))}
+            </ul>
+          )}
           <button onClick={() => setStatus("idle")} className="block mx-auto mt-2 text-xs underline">
             {t("import_retry")}
           </button>

@@ -1,3 +1,4 @@
+import { validateBookRecords, type RejectedRecord } from "./book-validation";
 import type { Book } from "./types";
 
 const BACKUP_VERSION = 1;
@@ -17,29 +18,29 @@ export function createBackup(books: Book[]): string {
   return JSON.stringify(data, null, 2);
 }
 
-export function parseBackup(json: string): { books: Book[]; error?: string } {
+export function parseBackup(json: string): {
+  books: Book[];
+  rejected: RejectedRecord[];
+  error?: string;
+} {
   try {
     const data = JSON.parse(json);
 
     if (!data.version || !Array.isArray(data.books)) {
-      return { books: [], error: "Format de fichier invalide" };
+      return { books: [], rejected: [], error: "Format de fichier invalide" };
     }
 
-    const books: Book[] = data.books.filter(
-      (b: Record<string, unknown>) =>
-        typeof b.id === "string" &&
-        typeof b.title === "string" &&
-        typeof b.stage === "string" &&
-        ["a_acheter", "tsundoku", "bibliotheque", "revendre"].includes(b.stage as string)
-    );
+    // Validated against the cloud schema, not just against Dexie: a record this
+    // accepts must be pushable, or it becomes a book stranded on one device.
+    const { books, rejected } = validateBookRecords(data.books);
 
     if (books.length === 0 && data.books.length > 0) {
-      return { books: [], error: "Aucun livre valide trouvé dans le fichier" };
+      return { books: [], rejected, error: "Aucun livre valide trouvé dans le fichier" };
     }
 
-    return { books };
+    return { books, rejected };
   } catch {
-    return { books: [], error: "Fichier JSON invalide" };
+    return { books: [], rejected: [], error: "Fichier JSON invalide" };
   }
 }
 

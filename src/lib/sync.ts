@@ -1,3 +1,4 @@
+import { validateBookRecord } from "./book-validation";
 import { db, type SyncFailure } from "./db";
 import { supabase } from "./supabase";
 import type { Book, Stage } from "./types";
@@ -166,6 +167,27 @@ export async function flushQueue(): Promise<{ flushed: number; failed: number }>
   try {
     for (const entry of entries) {
       try {
+        // A record the cloud cannot accept would either 400 forever or, with an
+        // invalid date, throw inside mapBookToSupabase — and a throw counts as
+        // transient, so it would be retried on every flush for good. Reject it
+        // here instead, where it gets recorded and reported.
+        if (entry.operation === "upsert") {
+          const check = validateBookRecord(entry.payload);
+          if (!check.ok) {
+            console.error("Sync flush rejected entry", entry.id, entry.bookId, check.reason);
+            await db.sync_failures.put({
+              bookId: entry.bookId,
+              title: (entry.payload as Book).title ?? entry.bookId,
+              status: 0,
+              message: check.reason,
+              at: Date.now(),
+            });
+            await db.sync_queue.delete(entry.id!);
+            failed++;
+            continue;
+          }
+        }
+
         const now = new Date().toISOString();
         const res =
           entry.operation === "upsert"

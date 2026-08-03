@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.5.0",
+    date: "2026-08-03",
+    changes: {
+      fr: [
+        "L'import de sauvegarde vérifie maintenant chaque livre avant de l'ajouter, et liste ceux qu'il ignore avec la raison — au lieu de les écarter en silence",
+        "Correction : un livre à la date invalide bloquait la file de synchronisation en boucle sans jamais être signalé",
+      ],
+      en: [
+        "Backup import now checks every book before adding it, and lists the ones it skips with the reason — instead of discarding them silently",
+        "Fix: a book with an invalid date looped in the sync queue for ever without ever being reported",
+      ],
+    },
+  },
+  {
     version: "2.4.0",
     date: "2026-08-03",
     changes: {
