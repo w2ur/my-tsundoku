@@ -5,8 +5,9 @@ import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import BookConfirmation from "@/components/BookConfirmation";
-import { getBookByISBN } from "@/lib/open-library";
-import { addBook } from "@/lib/books";
+import { lookupByISBN } from "@/lib/book-lookup";
+import { addBook, getAllBooks, moveBookToPosition } from "@/lib/books";
+import { findDuplicate, type DuplicateMatch } from "@/lib/duplicates";
 import { isValidISBN } from "@/lib/isbn";
 import type { Stage } from "@/lib/types";
 import { useTranslation } from "@/lib/preferences";
@@ -34,6 +35,7 @@ export default function ScanPage() {
   const [error, setError] = useState("");
   const [bookData, setBookData] = useState<{ title: string; author: string; coverUrl: string } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [duplicate, setDuplicate] = useState<DuplicateMatch | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
 
@@ -49,9 +51,13 @@ export default function ScanPage() {
     setStatus("loading");
 
     try {
-      const result = await getBookByISBN(cleaned);
+      const result = await lookupByISBN(cleaned);
       if (result) {
         setBookData({ title: result.title, author: result.author, coverUrl: result.coverUrl });
+        const library = await getAllBooks();
+        setDuplicate(
+          findDuplicate({ isbn: cleaned, title: result.title, author: result.author }, library),
+        );
         setStatus("confirm");
       } else {
         setError(t("scan_isbnNotFound").replace("{isbn}", cleaned));
@@ -84,8 +90,15 @@ export default function ScanPage() {
     router.push(`/?stage=${stage}`);
   }
 
+  async function handleMoveExisting(bookId: string) {
+    setSaving(true);
+    await moveBookToPosition(bookId, "tsundoku", 0);
+    router.push("/?stage=tsundoku");
+  }
+
   function handleCancel() {
     setBookData(null);
+    setDuplicate(null);
     setStatus("idle");
   }
 
@@ -103,6 +116,8 @@ export default function ScanPage() {
             title={bookData.title}
             author={bookData.author}
             coverUrl={bookData.coverUrl}
+            duplicate={duplicate}
+            onMoveExisting={handleMoveExisting}
             onConfirm={handleConfirm}
             onCancel={handleCancel}
             loading={saving}
