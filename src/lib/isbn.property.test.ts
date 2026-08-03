@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as fc from "fast-check";
-import { isValidISBN10, isValidISBN13 } from "./isbn";
+import { isValidISBN10, isValidISBN13, isbn10To13, toComparableIsbn } from "./isbn";
 
 // Builds a valid ISBN-10 from 9 arbitrary digits by computing the check digit.
 // The check digit c satisfies: (Σ d_i*(10-i) for i=0..8) + c ≡ 0 (mod 11)
@@ -72,6 +72,30 @@ describe("ISBN property tests (checksum round-trip)", () => {
         if (corruptLast === validIsbn[12]) return;
         const corrupt = validIsbn.slice(0, 12) + corruptLast;
         expect(isValidISBN13(corrupt)).toBe(false);
+      }),
+      { numRuns: 1000 },
+    );
+  });
+});
+
+describe("ISBN-10 to ISBN-13 conversion properties", () => {
+  it("produces a valid ISBN-13 for every valid ISBN-10", () => {
+    fc.assert(
+      fc.property(arbNineDigits, (digits9) => {
+        const converted = isbn10To13(buildValidISBN10(digits9));
+        expect(converted).not.toBeNull();
+        expect(isValidISBN13(converted as string)).toBe(true);
+      }),
+      { numRuns: 1000 },
+    );
+  });
+
+  it("gives both forms of the same book the same comparable value", () => {
+    fc.assert(
+      fc.property(arbNineDigits, (digits9) => {
+        const isbn10 = buildValidISBN10(digits9);
+        const isbn13 = isbn10To13(isbn10) as string;
+        expect(toComparableIsbn(isbn10)).toBe(toComparableIsbn(isbn13));
       }),
       { numRuns: 1000 },
     );
