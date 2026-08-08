@@ -2,6 +2,7 @@
 name: "My Tsundoku"
 tagline_fr: "Collectionner des livres qu’on ne lira jamais, mais avec méthode."
 tagline_en: "Collecting books you’ll never read, but doing it properly."
+about_en: "A bilingual (FR/EN) offline-first PWA for organizing personal book collections on a Kanban board."
 facts_fr: "Next.js 16, local-first sur IndexedDB, synchro Supabase, PWA hors ligne."
 facts_en: "Next.js 16, local-first on IndexedDB, Supabase sync, offline PWA."
 ---
