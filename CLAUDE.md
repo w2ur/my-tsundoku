@@ -53,7 +53,7 @@ Environment variables (see `.env.example`):
 
 ## Build Warning Exceptions
 
-None currently. Build must produce zero warnings.
+None currently.
 
 ## License
 
