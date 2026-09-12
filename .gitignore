@@ -40,8 +40,12 @@ Thumbs.db
 # plan files
 docs/plans/
 
-# Claude Code agent memory
-.claude/
+# Claude Code per-agent memory and local state (never the whole .claude/,
+# which would silently untrack any project skill written there)
+.claude/agent-memory/
+.claude/agent-memory-local/
+.claude/worktrees/
+.claude/settings.local.json
 
 # debug
 npm-debug.log*

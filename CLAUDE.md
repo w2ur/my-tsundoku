@@ -11,7 +11,7 @@ Tsundoku is a PWA for organizing personal book collections using a Kanban-style 
 - **Database**: Dexie.js (IndexedDB) — local-first, all data stored client-side
 - **Cloud**: Supabase (Auth, Postgres, Storage) — OTP code auth, cloud sync, community catalog
 - **PWA**: Serwist (configurator mode) — `serwist.config.js` + `serwist build` post-step
-- **Drag & Drop**: @dnd-kit/core ^6.3.1 + @dnd-kit/sortable ^10.0.0
+- **Drag & Drop**: @dnd-kit (core + sortable) — versions live in `package.json`
 - **Animations**: motion
 - **Barcode Scanning**: @zxing/browser
 - **Image Cropping**: react-image-crop
@@ -37,23 +37,17 @@ Environment variables (see `.env.example`):
 
 ## Project Structure
 
-- `src/lib/` — types, db, books CRUD, constants, open-library, bnf, book-lookup, duplicates, backup, quotes, roadmap, changelog, search, swipe, preferences, supabase, auth, sync, covers, account, community-search, isbn
-- `src/lib/i18n/` — translation dictionaries (fr.ts canonical, en.ts), locale types, plural helper
-- `src/hooks/` — useBooks, useBook, useBooksByStage (Dexie live queries), useIsMobile
-- `src/components/` — reusable UI components
-- `src/app/` — routes: `/`, `/en`, `/add/`, `/add/scan`, `/add/manual`, `/book/[id]`, `/settings`, `/~offline`, `/share-target`
-- `src/app/sw.ts` — service worker (excluded from tsconfig, compiled by Serwist CLI)
-- `supabase/migrations/` — SQL migration files for Supabase schema
+- `src/lib/` — domain logic: data layer (Dexie `db`, books CRUD, sync, backup), external lookup (Open Library, BnF, ISBN), and presentation helpers. `src/lib/i18n/` holds the dictionaries (`fr.ts` canonical, `en.ts`) plus locale types and the plural helper.
+- `src/hooks/` — Dexie live-query hooks and viewport helpers.
+- `src/components/` — reusable UI components.
+- `src/app/` — App Router routes. `src/app/sw.ts` is the service worker (excluded from `tsconfig.json`, compiled separately by the Serwist CLI).
+- `supabase/migrations/` — SQL migrations for the Supabase schema.
 
 ## Testing
 
 - **Framework**: Vitest with jsdom environment
 - **Convention**: test files live next to source (`foo.ts` → `foo.test.ts`)
 - **Priority**: utility functions, data transformations, business logic
-
-## Build Warning Exceptions
-
-None currently.
 
 ## License
 
@@ -68,7 +62,6 @@ AGPL-3.0-only. Commercial licensing available — contact w@revah.paris.
 
 - `sw.ts` is excluded from `tsconfig.json` (uses webworker types, compiled separately by Serwist CLI)
 - Serwist must use configurator mode, not `withSerwistInit` wrapper (Next.js 16/Turbopack compat)
-- Build command: `next build && serwist build`
 - Dexie SSR guard: `typeof window !== 'undefined'`
 - Supabase SSR guard: `supabase` client is `null` on server (same pattern as Dexie)
 - Sync is local-first: Dexie remains source of truth, Supabase is backup/sync layer
@@ -85,7 +78,7 @@ AGPL-3.0-only. Commercial licensing available — contact w@revah.paris.
 - Stage glyphs are SVG in `StageIcon.tsx`, not emoji. `STAGE_CONFIG` deliberately has no `emoji` field: it was the only label on the mobile tab bar, where 📚/📖 were indistinguishable. `StageTabs` stacks icon over label so the full "Livres à acheter" fits a ~93px tab
 - Keyboard focus comes from one global `:focus-visible` rule in globals.css. Do not add `focus:outline-none` without an equally visible replacement
 - Reduced motion needs both layers: the CSS `prefers-reduced-motion` block covers transitions/animations, and `MotionProvider` (`MotionConfig reducedMotion="user"`) covers the motion library's JS springs. CSS alone does not reach them
-- i18n: homegrown, no dependencies. `fr.ts` defines canonical shape, `en.ts` satisfies `Record<TranslationKeys, string>`. Use `useTranslation()` hook for all UI strings. Light mode and French are defaults — no system preference detection
+- i18n: homegrown, no dependencies. `fr.ts` defines the canonical shape, `en.ts` satisfies `Record<TranslationKeys, string>`. French and light mode are the defaults and there is **no** `prefers-color-scheme` detection — a deliberate opt-out from the portfolio default, because theme is a per-device preference persisted in Dexie (`db.settings` key `theme`) and toggled in Settings, and reading a media query would fight the stored value on first paint. Both themes are fully supported and `contrast.test.ts` asserts both.
 - Content files (quotes, roadmap, changelog) are locale-indexed separately from the translation dictionary
 - Fonts: Playfair Display (serif), Inter (sans)
 - Bump the version in `package.json` (semver) when a commit changes user-facing behavior. Add a matching entry in `src/lib/changelog.ts`. Internal changes (refactors, tests, docs) don't trigger a bump.
