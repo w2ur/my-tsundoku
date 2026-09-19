@@ -12,8 +12,11 @@
 -- cover_url is sanitised rather than passed through: it can hold a Supabase Storage path
 -- under the owner's auth uuid (src/lib/covers.ts, uploadCover) or a raw base64 data: URL
 -- (resolveCoverUrl's offline fallback), neither of which should reach an anonymous reader.
--- Only a plain http(s) URL that is not a Storage covers/ path survives; anything else comes
+-- Only a plain https:// URL that is not a Storage covers/ path survives; anything else comes
 -- through as '' and the hub renders the paper-rectangle-plus-initial fallback instead.
+-- 'https://%' and not 'http%': the looser pattern also matched 'http://' — an insecure cover
+-- on an https page is a mixed-content block, so it would render as a broken image rather than
+-- as the fallback — and matched anything merely STARTING with those four letters, 'httpfoo' included.
 ALTER TABLE public.profiles ADD COLUMN share_shelf boolean NOT NULL DEFAULT false;
 
 CREATE VIEW public.public_shelf AS
@@ -21,7 +24,7 @@ CREATE VIEW public.public_shelf AS
     b.title,
     b.author,
     CASE
-      WHEN b.cover_url LIKE 'http%' AND b.cover_url NOT LIKE '%/storage/v1/object/public/covers/%'
+      WHEN b.cover_url LIKE 'https://%' AND b.cover_url NOT LIKE '%/storage/v1/object/public/covers/%'
         THEN b.cover_url
       ELSE ''
     END AS cover_url,
