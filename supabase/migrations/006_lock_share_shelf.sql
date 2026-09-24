@@ -1,4 +1,8 @@
 -- 006_lock_share_shelf.sql — share_shelf and the public shelf become owner-controlled.
+-- site_owner is created empty by this migration and public_shelf is gated on it, so the
+-- shelf is empty until it is seeded. Immediately after applying this file, run in the
+-- dashboard SQL editor: INSERT INTO public.site_owner (id) VALUES ('<owner auth uuid>');
+-- (the uuid is never committed).
 -- Layer 1: users may write only what the app writes (settings/page.tsx updates
 -- contribute_to_catalog; handle_new_user() and delete_own_account are SECURITY DEFINER).
 REVOKE UPDATE, INSERT ON public.profiles FROM anon, authenticated;
