@@ -43,8 +43,6 @@ const en: Record<TranslationKeys, string> = {
   header_search: "Search",
   header_settings: "Settings",
   footer_mailtoSubject: "User feedback",
-  welcome_title: "Welcome to My Tsundoku",
-  welcome_subtitle: "Organize your reading in 4 stages",
   welcome_stageAcheter: "To buy",
   welcome_stageAcheterDesc: "Books you've spotted",
   welcome_stageTsundoku: "Tsundoku",

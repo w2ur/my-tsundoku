@@ -8,6 +8,7 @@ import { STAGE_CONFIG } from "@/lib/constants";
 import type { Stage } from "@/lib/types";
 import type { TranslationKeys } from "@/lib/i18n";
 import StageIcon from "./StageIcon";
+import { LANDING } from "@/lib/landing";
 
 const STAGE_ROWS: { stage: Stage; nameKey: TranslationKeys; descKey: TranslationKeys }[] = [
   { stage: "a_acheter", nameKey: "welcome_stageAcheter", descKey: "welcome_stageAcheterDesc" },
@@ -17,7 +18,11 @@ const STAGE_ROWS: { stage: Stage; nameKey: TranslationKeys; descKey: Translation
 ];
 
 export default function WelcomeGuide() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  // The modal is the first screen a new visitor sees, so it carries the
+  // landing pitch (headline + free/offline/no-account claims) instead of a
+  // generic greeting: the landing section itself starts below the board.
+  const pitch = LANDING[locale];
   const [dismissed, setDismissed] = useState(false);
 
   const hasSeenWelcome = useLiveQuery(
@@ -47,10 +52,10 @@ export default function WelcomeGuide() {
       />
       <div className="relative bg-paper rounded-t-2xl sm:rounded-2xl p-6 w-full sm:max-w-sm mx-auto">
         <h2 className="font-serif text-xl font-semibold text-ink text-center">
-          {t("welcome_title")}
+          {pitch.heroTitle}
         </h2>
-        <p className="text-sm text-subtle text-center mt-1">
-          {t("welcome_subtitle")}
+        <p className="text-sm text-muted text-center mt-2">
+          {pitch.heroSubtitle}
         </p>
 
         {/* These four rows are the user's first sight of each stage glyph, so

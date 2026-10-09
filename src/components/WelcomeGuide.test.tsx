@@ -22,6 +22,7 @@ vi.mock("@/lib/db", () => ({
 }));
 
 import WelcomeGuide from "./WelcomeGuide";
+import { LANDING } from "@/lib/landing";
 
 afterEach(() => {
   cleanup();
@@ -43,8 +44,17 @@ describe("WelcomeGuide", () => {
   it("renders the guide when hasSeenWelcome key does not exist", () => {
     mockQueryResult.current = null;
     renderWithPreferences(<WelcomeGuide />);
-    expect(screen.getByText("Bienvenue sur My Tsundoku")).toBeTruthy();
+    expect(screen.getByText("Votre pile à lire, enfin organisée")).toBeTruthy();
     expect(screen.getByText("C'est parti !")).toBeTruthy();
+  });
+
+  // The modal covers the board on a first visit, and the landing pitch sits
+  // below the fold behind it: the modal must carry the pitch itself.
+  it("carries the landing pitch (free, offline, no account) on the first screen", () => {
+    mockQueryResult.current = null;
+    renderWithPreferences(<WelcomeGuide />);
+    expect(screen.getByRole("heading", { name: LANDING.fr.heroTitle })).toBeTruthy();
+    expect(screen.getByText(LANDING.fr.heroSubtitle)).toBeTruthy();
   });
 
   it("renders nothing when hasSeenWelcome is true", () => {
@@ -62,7 +72,7 @@ describe("WelcomeGuide", () => {
       key: "hasSeenWelcome",
       value: true,
     });
-    expect(screen.queryByText("Bienvenue sur My Tsundoku")).toBeNull();
+    expect(screen.queryByText("Votre pile à lire, enfin organisée")).toBeNull();
   });
 
   it("dismisses the guide when the backdrop is clicked", async () => {
@@ -76,6 +86,6 @@ describe("WelcomeGuide", () => {
       key: "hasSeenWelcome",
       value: true,
     });
-    expect(screen.queryByText("Bienvenue sur My Tsundoku")).toBeNull();
+    expect(screen.queryByText("Votre pile à lire, enfin organisée")).toBeNull();
   });
 });

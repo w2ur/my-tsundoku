@@ -41,8 +41,6 @@ const fr = {
   header_search: "Rechercher",
   header_settings: "Paramètres",
   footer_mailtoSubject: "Retour utilisateur",
-  welcome_title: "Bienvenue sur My Tsundoku",
-  welcome_subtitle: "Organisez vos lectures en 4 étapes",
   welcome_stageAcheter: "À acheter",
   welcome_stageAcheterDesc: "Les livres que vous repérez",
   welcome_stageTsundoku: "Tsundoku",
