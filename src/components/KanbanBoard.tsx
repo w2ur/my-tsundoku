@@ -498,7 +498,7 @@ export default function KanbanBoard({
                 </span>
                 <Link
                   href={`/add?stage=${stage}`}
-                  className="ml-auto text-subtle hover:text-muted transition-colors"
+                  className="ml-auto -m-2 p-2 rounded-md text-subtle hover:text-muted hover:bg-forest/5 transition-colors"
                   aria-label={t("kanban_addBookToStage").replace("{stage}", t(STAGE_CONFIG[stage].labelKey))}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
