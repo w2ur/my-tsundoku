@@ -32,7 +32,7 @@ export default function LandingSection({ locale }: LandingSectionProps) {
           <p className="text-base text-ink/70">{content.heroSubtitle}</p>
         </header>
         {content.sections.map((s) => (
-          <div key={s.title} className="space-y-2">
+          <div key={s.title} className="max-w-[31rem] mx-auto space-y-2">
             <h2 className="font-serif text-xl text-forest">{s.title}</h2>
             <p className="text-sm leading-relaxed text-ink/80">{s.body}</p>
           </div>
@@ -40,7 +40,7 @@ export default function LandingSection({ locale }: LandingSectionProps) {
         <p className="text-center">
           <Link
             href="/add"
-            className="inline-block bg-forest text-paper font-medium px-6 py-3 rounded-full text-sm hover:bg-forest/90 transition-colors"
+            className="inline-block bg-forest text-paper font-medium px-6 py-3 rounded-lg text-sm hover:bg-forest/90 transition-colors"
           >
             {content.ctaLabel}
           </Link>
