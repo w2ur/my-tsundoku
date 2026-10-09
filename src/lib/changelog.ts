@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.7.1",
+    date: "2026-10-10",
+    changes: {
+      fr: [
+        "Sur mobile, le nom des onglets est plus grand et ne se coupe plus",
+        "La fenêtre de bienvenue présente l'application dès la première visite",
+        "Le bouton + de chaque colonne est plus facile à atteindre",
+      ],
+      en: [
+        "On mobile, tab names are larger and no longer cut off",
+        "The welcome window introduces the app from the very first visit",
+        "Each column's + button is easier to hit",
+      ],
+    },
+  },
+  {
     version: "2.7.0",
     date: "2026-08-03",
     changes: {
