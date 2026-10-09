@@ -38,6 +38,8 @@ export default function StageTabs({ active, counts, onChange, searchActive }: St
         // Stacked icon-over-label so the full label fits: "Livres à acheter"
         // cannot fit a ~93px tab horizontally, which is why the label used to be
         // hidden below sm — leaving an emoji as the only nav label on phones.
+        // The label is 12px and may wrap to two lines rather than truncate:
+        // at 10px it sat below the legibility floor for primary navigation.
         return (
           <button
             key={stage}
@@ -58,7 +60,7 @@ export default function StageTabs({ active, counts, onChange, searchActive }: St
                 {counts[stage]}
               </span>
             </span>
-            <span className="text-[10px] leading-tight font-medium truncate max-w-full">
+            <span className="text-xs leading-tight font-medium text-center line-clamp-2 break-words max-w-full">
               {t(config.labelKey)}
             </span>
           </button>
