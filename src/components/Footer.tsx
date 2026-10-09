@@ -7,7 +7,7 @@ export default function Footer() {
   const version = process.env.NEXT_PUBLIC_APP_VERSION;
 
   return (
-    <footer className="py-1.5 md:py-3 pb-safe flex-shrink-0 text-center text-[11px] text-subtle">
+    <footer className="py-1.5 md:py-3 pb-safe flex-shrink-0 text-center text-xs text-subtle">
       {t("footer_madeBy")}{" "}
       <a
         href="https://william.revah.paris"

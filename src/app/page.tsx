@@ -1,3 +1,4 @@
+import Footer from "@/components/Footer";
 import HomeApp from "@/components/HomeApp";
 import LandingGate from "@/components/LandingGate";
 import LandingSection from "@/components/LandingSection";
@@ -8,6 +9,7 @@ export default function Home() {
       <HomeApp />
       <LandingGate>
         <LandingSection locale="fr" />
+        <Footer />
       </LandingGate>
     </>
   );

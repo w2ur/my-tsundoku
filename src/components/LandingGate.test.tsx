@@ -34,4 +34,22 @@ describe("LandingGate", () => {
     const { container } = render(<LandingGate><p>landing</p></LandingGate>);
     expect(container.innerHTML).toBe("");
   });
+
+  // showWhen="app" is the complement: the footer must close the document once,
+  // after the landing on a first visit and under the board otherwise.
+  it("showWhen=app renders nothing while the landing is shown", () => {
+    mockBooks.current = undefined;
+    const loading = render(<LandingGate showWhen="app"><p>footer</p></LandingGate>);
+    expect(loading.container.innerHTML).toBe("");
+    cleanup();
+    mockBooks.current = [];
+    const empty = render(<LandingGate showWhen="app"><p>footer</p></LandingGate>);
+    expect(empty.container.innerHTML).toBe("");
+  });
+
+  it("showWhen=app renders children once the user has a book", () => {
+    mockBooks.current = [{ id: "1" }];
+    render(<LandingGate showWhen="app"><p>footer</p></LandingGate>);
+    expect(screen.getByText("footer")).toBeTruthy();
+  });
 });
