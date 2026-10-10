@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LandingCta from "@/components/LandingCta";
 import EnterAppButton from "@/components/EnterAppButton";
 import StageIcon from "@/components/StageIcon";
 import { STAGE_CONFIG } from "@/lib/constants";
@@ -41,12 +41,7 @@ export default function LandingPage({ locale }: LandingPageProps) {
               {content.heroTitle}
             </h1>
             <p className="mt-4 text-base text-muted">{content.heroSubtitle}</p>
-            <Link
-              href="/add"
-              className="mt-8 block rounded-lg bg-forest px-6 py-3 text-center text-sm font-medium text-paper transition-colors hover:bg-forest/90 md:inline-block"
-            >
-              {content.ctaLabel}
-            </Link>
+            <LandingCta label={content.ctaLabel} locale={locale} />
             <p className="mt-3 text-sm text-subtle">{content.reassurance}</p>
           </section>
 
