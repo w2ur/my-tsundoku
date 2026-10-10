@@ -6,10 +6,12 @@ import { LANDING } from "@/lib/landing";
 afterEach(cleanup);
 
 describe("LandingSection", () => {
-  it("renders the French hero and all sections", () => {
+  it("renders the French hero and content blocks", () => {
     const { getByRole, getByText } = render(<LandingSection locale="fr" />);
     expect(getByRole("heading", { level: 1 }).textContent).toBe(LANDING.fr.heroTitle);
-    for (const s of LANDING.fr.sections) expect(getByText(s.title)).toBeTruthy();
+    expect(getByText(LANDING.fr.reassurance)).toBeTruthy();
+    expect(getByText(LANDING.fr.scan.title)).toBeTruthy();
+    expect(getByText(LANDING.fr.privacy.title)).toBeTruthy();
   });
 
   it("renders the English content with lang attribute", () => {

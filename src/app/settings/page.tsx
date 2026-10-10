@@ -24,6 +24,7 @@ import {
 } from "@/lib/sync";
 import type { SyncFailure } from "@/lib/db";
 import { deleteAccount } from "@/lib/account";
+import { CODE_URL } from "@/lib/landing";
 
 export default function SettingsPage() {
   const booksByStage = useBooksByStage();
@@ -640,7 +641,7 @@ export default function SettingsPage() {
           </p>
           <div className="flex items-center gap-3 mt-3">
             <a
-              href="https://github.com/w2ur/tsundoku"
+              href={CODE_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-xs text-subtle hover:text-muted transition-colors"

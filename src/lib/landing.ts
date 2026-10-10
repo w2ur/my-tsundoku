@@ -1,68 +1,135 @@
+import type { Stage } from "@/lib/types";
+
 type Locale = "fr" | "en";
 
-export interface LandingSectionContent {
-  title: string;
-  body: string;
+export const CODE_URL = "https://github.com/w2ur/my-tsundoku";
+
+export interface LandingPile {
+  stage: Stage;
+  name: string;
+  caption: string;
+}
+
+export interface LandingFaqItem {
+  question: string;
+  answer: string;
 }
 
 export interface LandingContent {
   heroTitle: string;
   heroSubtitle: string;
-  sections: LandingSectionContent[];
+  reassurance: string;
   ctaLabel: string;
+  enterAppLabel: string;
+  pilesTitle: string;
+  piles: LandingPile[];
+  scan: { title: string; body: string };
+  privacy: { title: string; body: string; codeLinkLabel: string };
+  faqTitle: string;
+  faq: LandingFaqItem[];
+  screenshotAlt: string;
   metaDescription: string;
 }
 
 const FR: LandingContent = {
-  heroTitle: "Votre pile à lire, enfin organisée",
+  heroTitle: "Votre tsundoku, de l’envie à la bibliothèque",
   heroSubtitle:
-    "My Tsundoku range votre PAL et votre bibliothèque en quatre piles claires. Gratuit, hors ligne, sans compte obligatoire.",
-  sections: [
+    "My Tsundoku range votre PAL et votre bibliothèque en quatre piles claires.",
+  reassurance: "Gratuit · sans compte · hors ligne · open source",
+  ctaLabel: "Ajouter mon premier livre",
+  enterAppLabel: "Ouvrir l’application",
+  pilesTitle: "Quatre piles",
+  piles: [
+    { stage: "a_acheter", name: "À acheter", caption: "Les livres que vous repérez" },
+    { stage: "tsundoku", name: "Tsundoku", caption: "Votre pile à lire" },
+    { stage: "bibliotheque", name: "Bibliothèque", caption: "Les livres lus et gardés" },
+    { stage: "revendre", name: "S’en séparer", caption: "À donner ou revendre" },
+  ],
+  scan: {
+    title: "Un livre ajouté en quelques secondes",
+    body: "Scannez le code-barres ISBN et la fiche se remplit toute seule — titre, auteur, couverture, via Open Library. Ou saisissez tout à la main si vous préférez.",
+  },
+  privacy: {
+    title: "Vos données restent chez vous",
+    body: "Tout est stocké sur votre appareil et fonctionne hors ligne. L’application s’installe sur votre téléphone comme une app native, et la synchronisation entre appareils reste optionnelle. My Tsundoku est un logiciel libre (AGPL), sans publicité, mesure d’audience anonyme.",
+    codeLinkLabel: "Voir le code source",
+  },
+  faqTitle: "Questions fréquentes",
+  faq: [
     {
-      title: "Une PAL qui ressemble à quelque chose",
-      body: "Quatre piles : envies d'achat, tsundoku (la pile à lire), bibliothèque, à revendre. Vous glissez vos livres d'une pile à l'autre au fil de vos lectures, comme sur une étagère.",
+      question: "Et si je vide les données de mon navigateur ?",
+      answer:
+        "Vos livres partent avec, puisqu’ils vivent dans le navigateur. D’où l’intérêt d’exporter de temps en temps une sauvegarde (Réglages › Exporter ma bibliothèque), ou d’activer la synchronisation.",
     },
     {
-      title: "Un livre ajouté en quelques secondes",
-      body: "Scannez le code-barres ISBN et la fiche se remplit toute seule — titre, auteur, couverture, via Open Library. Ou saisissez tout à la main si vous préférez.",
+      question: "Je change de téléphone, je perds tout ?",
+      answer:
+        "Non, si vous avez pris vos précautions : soit vous importez votre sauvegarde sur le nouvel appareil, soit vous vous connectez avec votre e-mail (un code suffit, pas de mot de passe) et vos livres reviennent.",
     },
     {
-      title: "Vos données restent chez vous",
-      body: "Tout est stocké sur votre appareil et fonctionne hors ligne. L'application s'installe sur votre téléphone comme une app native. La synchronisation entre appareils existe, mais elle est optionnelle.",
+      question: "Je peux récupérer mes données ?",
+      answer:
+        "Oui, à tout moment, dans un fichier JSON, depuis les Réglages. Elles sont à vous, c’est un peu le principe.",
     },
     {
-      title: "Gratuit et open source",
-      body: "My Tsundoku est un logiciel libre (AGPL), sans publicité et sans tracking. Organiser sa bibliothèque ne devrait rien coûter.",
+      question: "La synchronisation est-elle obligatoire ?",
+      answer:
+        "Non. L’application fonctionne entièrement sans compte, la synchronisation sert seulement à retrouver la même bibliothèque sur plusieurs appareils.",
     },
   ],
-  ctaLabel: "Ajouter mon premier livre",
+  screenshotAlt:
+    "Le tableau My Tsundoku rempli : quatre piles de livres, des envies d’achat à la bibliothèque",
   metaDescription:
     "Organisez votre pile à lire (PAL) et votre bibliothèque en quatre piles : envies, tsundoku, bibliothèque, à revendre. Gratuit, hors ligne, open source.",
 };
 
 const EN: LandingContent = {
-  heroTitle: "Your to-be-read pile, finally organized",
-  heroSubtitle:
-    "My Tsundoku sorts your book collection into four clear piles. Free, offline-first, no account required.",
-  sections: [
+  heroTitle: "Your tsundoku, from wishlist to library",
+  heroSubtitle: "My Tsundoku sorts your book collection into four clear piles.",
+  reassurance: "Free · no account · offline · open source",
+  ctaLabel: "Add my first book",
+  enterAppLabel: "Open the app",
+  pilesTitle: "Four piles",
+  piles: [
+    { stage: "a_acheter", name: "To buy", caption: "Books you've spotted" },
+    { stage: "tsundoku", name: "Tsundoku", caption: "Your reading pile" },
+    { stage: "bibliotheque", name: "Library", caption: "Books read and kept" },
+    { stage: "revendre", name: "Let go", caption: "To give away or sell" },
+  ],
+  scan: {
+    title: "Add a book in seconds",
+    body: "Scan the ISBN barcode and the details fill themselves in — title, author, cover, via Open Library. Or type everything in manually if you prefer.",
+  },
+  privacy: {
+    title: "Your data stays with you",
+    body: "Everything is stored on your device and works offline. Install it on your phone like a native app; syncing across devices stays optional. My Tsundoku is free software (AGPL), with no ads, anonymous audience measurement.",
+    codeLinkLabel: "See the source code",
+  },
+  faqTitle: "Common questions",
+  faq: [
     {
-      title: "A book tracker shaped like your shelves",
-      body: "Four piles: wishlist, tsundoku (the to-be-read pile), library, to sell. Drag books from pile to pile as your reading life moves on.",
+      question: "What if I clear my browser data?",
+      answer:
+        "Your books go with it, since they live in the browser. That's why it's worth exporting a backup now and then (Settings › Export my library), or turning on sync.",
     },
     {
-      title: "Add a book in seconds",
-      body: "Scan the ISBN barcode and the details fill themselves in — title, author, cover, via Open Library. Or type everything in manually if you prefer.",
+      question: "I'm changing phones — do I lose everything?",
+      answer:
+        "Not if you planned ahead: either import your backup on the new device, or sign in with your email (a code is enough, no password) and your books come back.",
     },
     {
-      title: "Your data stays with you",
-      body: "Everything is stored on your device and works offline. Install it on your phone like a native app. A simple alternative to Goodreads for tracking what you own and what you'll read next. Cross-device sync exists, but it's optional.",
+      question: "Can I get my data out?",
+      answer:
+        "Yes, any time, as a JSON file, from Settings. It's yours — that's rather the point.",
     },
     {
-      title: "Free and open source",
-      body: "My Tsundoku is free software (AGPL), with no ads and no tracking. Organizing your library shouldn't cost anything.",
+      question: "Is sync required?",
+      answer:
+        "No. The app works fully without an account; sync only lets you find the same library on several devices.",
     },
   ],
-  ctaLabel: "Add my first book",
+  screenshotAlt:
+    "The My Tsundoku board filled in: four piles of books, from wishlist to library",
   metaDescription:
     "Organize your tsundoku — the to-be-read pile — and your library in four piles: wishlist, tsundoku, library, to sell. Free, offline, open-source book tracker.",
 };

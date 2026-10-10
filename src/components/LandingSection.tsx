@@ -31,12 +31,15 @@ export default function LandingSection({ locale }: LandingSectionProps) {
           </h1>
           <p className="text-base text-ink/70">{content.heroSubtitle}</p>
         </header>
-        {content.sections.map((s) => (
-          <div key={s.title} className="max-w-[31rem] mx-auto space-y-2">
-            <h2 className="font-serif text-xl text-forest">{s.title}</h2>
-            <p className="text-sm leading-relaxed text-ink/80">{s.body}</p>
-          </div>
-        ))}
+        <p className="text-center text-sm text-muted">{content.reassurance}</p>
+        <div className="max-w-[31rem] mx-auto space-y-2">
+          <h2 className="font-serif text-xl text-forest">{content.scan.title}</h2>
+          <p className="text-sm leading-relaxed text-ink/80">{content.scan.body}</p>
+        </div>
+        <div className="max-w-[31rem] mx-auto space-y-2">
+          <h2 className="font-serif text-xl text-forest">{content.privacy.title}</h2>
+          <p className="text-sm leading-relaxed text-ink/80">{content.privacy.body}</p>
+        </div>
         <p className="text-center">
           <Link
             href="/add"

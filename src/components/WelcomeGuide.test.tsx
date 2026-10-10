@@ -44,7 +44,7 @@ describe("WelcomeGuide", () => {
   it("renders the guide when hasSeenWelcome key does not exist", () => {
     mockQueryResult.current = null;
     renderWithPreferences(<WelcomeGuide />);
-    expect(screen.getByText("Votre pile à lire, enfin organisée")).toBeTruthy();
+    expect(screen.getByText(LANDING.fr.heroTitle)).toBeTruthy();
     expect(screen.getByText("C'est parti !")).toBeTruthy();
   });
 
@@ -72,7 +72,7 @@ describe("WelcomeGuide", () => {
       key: "hasSeenWelcome",
       value: true,
     });
-    expect(screen.queryByText("Votre pile à lire, enfin organisée")).toBeNull();
+    expect(screen.queryByText(LANDING.fr.heroTitle)).toBeNull();
   });
 
   it("dismisses the guide when the backdrop is clicked", async () => {
@@ -86,6 +86,6 @@ describe("WelcomeGuide", () => {
       key: "hasSeenWelcome",
       value: true,
     });
-    expect(screen.queryByText("Votre pile à lire, enfin organisée")).toBeNull();
+    expect(screen.queryByText(LANDING.fr.heroTitle)).toBeNull();
   });
 });
