@@ -8,6 +8,22 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.8.0",
+    date: "2026-10-10",
+    changes: {
+      fr: [
+        "Une vraie page d'accueil pour la première visite, avec un aperçu de la bibliothèque",
+        "Questions fréquentes sur vos données",
+        "Fini le zoom intempestif en touchant un champ",
+      ],
+      en: [
+        "A real home page for first visits, with a preview of the library",
+        "Common questions about your data",
+        "No more unwanted zoom when tapping a field",
+      ],
+    },
+  },
+  {
     version: "2.7.1",
     date: "2026-10-10",
     changes: {
