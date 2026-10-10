@@ -70,6 +70,18 @@ describe.each(["fr", "en"] as const)("LandingPage (%s)", (locale) => {
     expect(html).toContain("application/ld+json");
     expect(html).not.toMatch(/text-(ink|forest)\/\d+/);
   });
+
+  it("embeds parseable SoftwareApplication JSON-LD that cannot close its script tag", () => {
+    const { doc } = page(locale);
+    const script = doc.querySelector('script[type="application/ld+json"]');
+    expect(script).toBeTruthy();
+    const payload = script!.textContent ?? "";
+    const data = JSON.parse(payload);
+    expect(data["@type"]).toBe("SoftwareApplication");
+    expect(data.name).toBe("My Tsundoku");
+    expect(data.offers.price).toBe("0");
+    expect(payload).not.toMatch(/<\/script/i);
+  });
 });
 
 describe("Footer locale override", () => {
