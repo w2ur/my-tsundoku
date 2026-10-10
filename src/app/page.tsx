@@ -1,16 +1,19 @@
+import EntryGate from "@/components/EntryGate";
 import Footer from "@/components/Footer";
 import HomeApp from "@/components/HomeApp";
-import LandingGate from "@/components/LandingGate";
 import LandingSection from "@/components/LandingSection";
 
 export default function Home() {
   return (
     <>
-      <HomeApp />
-      <LandingGate>
+      <EntryGate />
+      <div data-surface="landing">
         <LandingSection locale="fr" />
         <Footer />
-      </LandingGate>
+      </div>
+      <div data-surface="app">
+        <HomeApp />
+      </div>
     </>
   );
 }

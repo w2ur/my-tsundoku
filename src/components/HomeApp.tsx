@@ -4,9 +4,7 @@ import { useState } from "react";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import KanbanBoard from "@/components/KanbanBoard";
-import LandingGate from "@/components/LandingGate";
 import StoragePersistNudge from "@/components/StoragePersistNudge";
-import WelcomeGuide from "@/components/WelcomeGuide";
 
 export default function HomeApp() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -30,12 +28,7 @@ export default function HomeApp() {
           onClearSearch={() => { setSearchQuery(""); setIsSearchOpen(false); }}
         />
       </main>
-      <WelcomeGuide />
-      {/* While the landing is shown, the footer closes the page after it
-          (src/app/page.tsx) instead of sitting between board and landing. */}
-      <LandingGate showWhen="app">
-        <Footer />
-      </LandingGate>
+      <Footer />
     </div>
   );
 }

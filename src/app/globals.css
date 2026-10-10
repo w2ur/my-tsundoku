@@ -164,3 +164,8 @@ body {
 
 /* Removes double-tap zoom on fast repeated taps; pinch-zoom is unaffected. */
 html { touch-action: manipulation; }
+
+/* First-visit routing (src/lib/entry.ts): the server HTML carries both
+   surfaces; the <head> hint script and EntryGate pick one before paint. */
+html[data-entry="app"] [data-surface="landing"],
+html:not([data-entry="app"]) [data-surface="app"] { display: none; }

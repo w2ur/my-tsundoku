@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import MotionProvider from "@/components/MotionProvider";
 import { LANDING } from "@/lib/landing";
+import { ENTRY_HINT_SCRIPT } from "@/lib/entry";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -65,7 +66,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: ENTRY_HINT_SCRIPT }} />
+      </head>
       <body
         className={`${playfair.variable} ${inter.variable} font-sans antialiased bg-paper text-ink`}
       >
