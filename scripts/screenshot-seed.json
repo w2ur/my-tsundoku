@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "exportedAt": "2026-01-01T00:00:00.000Z",
+  "books": [
+    {
+      "id": "seed-01",
+      "title": "Les Misérables",
+      "author": "Victor Hugo",
+      "coverUrl": "",
+      "stage": "a_acheter",
+      "position": 0,
+      "createdAt": 1767225660000,
+      "updatedAt": 1767225660000
+    },
+    {
+      "id": "seed-02",
+      "title": "Le Comte de Monte-Cristo",
+      "author": "Alexandre Dumas",
+      "coverUrl": "",
+      "stage": "a_acheter",
+      "position": 1,
+      "createdAt": 1767225720000,
+      "updatedAt": 1767225720000
+    },
+    {
+      "id": "seed-03",
+      "title": "Middlemarch",
+      "author": "George Eliot",
+      "coverUrl": "",
+      "stage": "a_acheter",
+      "position": 2,
+      "createdAt": 1767225780000,
+      "updatedAt": 1767225780000
+    },
+    {
+      "id": "seed-04",
+      "title": "À la recherche du temps perdu — Du côté de chez Swann",
+      "author": "Marcel Proust",
+      "coverUrl": "",
+      "stage": "tsundoku",
+      "position": 0,
+      "createdAt": 1767225840000,
+      "updatedAt": 1767225840000,
+      "isReading": true
+    },
+    {
+      "id": "seed-05",
+      "title": "Guerre et Paix",
+      "author": "Léon Tolstoï",
+      "coverUrl": "",
+      "stage": "tsundoku",
+      "position": 1,
+      "createdAt": 1767225900000,
+      "updatedAt": 1767225900000
+    },
+    {
+      "id": "seed-06",
+      "title": "Moby Dick",
+      "author": "Herman Melville",
+      "coverUrl": "",
+      "stage": "tsundoku",
+      "position": 2,
+      "createdAt": 1767225960000,
+      "updatedAt": 1767225960000
+    },
+    {
+      "id": "seed-07",
+      "title": "Les Essais",
+      "author": "Michel de Montaigne",
+      "coverUrl": "",
+      "stage": "tsundoku",
+      "position": 3,
+      "createdAt": 1767226020000,
+      "updatedAt": 1767226020000
+    },
+    {
+      "id": "seed-08",
+      "title": "Don Quichotte",
+      "author": "Miguel de Cervantès",
+      "coverUrl": "",
+      "stage": "tsundoku",
+      "position": 4,
+      "createdAt": 1767226080000,
+      "updatedAt": 1767226080000
+    },
+    {
+      "id": "seed-09",
+      "title": "Madame Bovary",
+      "author": "Gustave Flaubert",
+      "coverUrl": "",
+      "stage": "bibliotheque",
+      "position": 0,
+      "createdAt": 1767226140000,
+      "updatedAt": 1767226140000
+    },
+    {
+      "id": "seed-10",
+      "title": "Le Rouge et le Noir",
+      "author": "Stendhal",
+      "coverUrl": "",
+      "stage": "bibliotheque",
+      "position": 1,
+      "createdAt": 1767226200000,
+      "updatedAt": 1767226200000
+    },
+    {
+      "id": "seed-11",
+      "title": "Orgueil et Préjugés",
+      "author": "Jane Austen",
+      "coverUrl": "",
+      "stage": "bibliotheque",
+      "position": 2,
+      "createdAt": 1767226260000,
+      "updatedAt": 1767226260000
+    },
+    {
+      "id": "seed-12",
+      "title": "Candide",
+      "author": "Voltaire",
+      "coverUrl": "",
+      "stage": "bibliotheque",
+      "position": 3,
+      "createdAt": 1767226320000,
+      "updatedAt": 1767226320000
+    },
+    {
+      "id": "seed-13",
+      "title": "Les Fleurs du mal",
+      "author": "Charles Baudelaire",
+      "coverUrl": "",
+      "stage": "bibliotheque",
+      "position": 4,
+      "createdAt": 1767226380000,
+      "updatedAt": 1767226380000
+    },
+    {
+      "id": "seed-14",
+      "title": "Bel-Ami",
+      "author": "Guy de Maupassant",
+      "coverUrl": "",
+      "stage": "revendre",
+      "position": 0,
+      "createdAt": 1767226440000,
+      "updatedAt": 1767226440000
+    },
+    {
+      "id": "seed-15",
+      "title": "Le Tour du monde en quatre-vingts jours",
+      "author": "Jules Verne",
+      "coverUrl": "",
+      "stage": "revendre",
+      "position": 1,
+      "createdAt": 1767226500000,
+      "updatedAt": 1767226500000
+    }
+  ]
+}
