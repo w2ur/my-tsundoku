@@ -51,7 +51,7 @@ const FR: LandingContent = {
   },
   privacy: {
     title: "Vos données restent chez vous",
-    body: "Tout est stocké sur votre appareil et fonctionne hors ligne. L’application s’installe sur votre téléphone comme une app native, et la synchronisation entre appareils reste optionnelle. My Tsundoku est un logiciel libre (AGPL), sans publicité, mesure d’audience anonyme.",
+    body: "Tout est stocké sur votre appareil et fonctionne hors ligne. L’application s’installe sur votre téléphone comme une app native, et la synchronisation entre appareils reste optionnelle. My Tsundoku est un logiciel libre (AGPL), sans publicité, avec une mesure d’audience anonyme.",
     codeLinkLabel: "Voir le code source",
   },
   faqTitle: "Questions fréquentes",
@@ -59,7 +59,7 @@ const FR: LandingContent = {
     {
       question: "Et si je vide les données de mon navigateur ?",
       answer:
-        "Vos livres partent avec, puisqu’ils vivent dans le navigateur. D’où l’intérêt d’exporter de temps en temps une sauvegarde (Réglages › Exporter ma bibliothèque), ou d’activer la synchronisation.",
+        "Vos livres partent avec, puisqu’ils vivent dans le navigateur. D’où l’intérêt d’exporter de temps en temps une sauvegarde (Paramètres › Exporter ma bibliothèque), ou d’activer la synchronisation.",
     },
     {
       question: "Je change de téléphone, je perds tout ?",
@@ -69,7 +69,7 @@ const FR: LandingContent = {
     {
       question: "Je peux récupérer mes données ?",
       answer:
-        "Oui, à tout moment, dans un fichier JSON, depuis les Réglages. Elles sont à vous, c’est un peu le principe.",
+        "Oui, à tout moment, dans un fichier JSON, depuis les Paramètres. Elles sont à vous, c’est un peu le principe.",
     },
     {
       question: "La synchronisation est-elle obligatoire ?",
@@ -102,7 +102,7 @@ const EN: LandingContent = {
   },
   privacy: {
     title: "Your data stays with you",
-    body: "Everything is stored on your device and works offline. Install it on your phone like a native app; syncing across devices stays optional. My Tsundoku is free software (AGPL), with no ads, anonymous audience measurement.",
+    body: "Everything is stored on your device and works offline. Install it on your phone like a native app; syncing across devices stays optional. My Tsundoku is free software (AGPL), with no ads and only anonymous audience measurement.",
     codeLinkLabel: "See the source code",
   },
   faqTitle: "Common questions",
