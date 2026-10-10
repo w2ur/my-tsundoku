@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from "react";
 import { db } from "./db";
-import { dictionaries, DEFAULT_LOCALE, type Locale, type TranslationKeys } from "./i18n";
+import { tFor, DEFAULT_LOCALE, type Locale, type TranslationKeys } from "./i18n";
 
 type Theme = "light" | "dark";
 
@@ -63,10 +63,7 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     db.settings.put({ key: "theme", value: newTheme });
   }, []);
 
-  const t = useCallback(
-    (key: TranslationKeys) => dictionaries[locale][key],
-    [locale]
-  );
+  const t = useMemo(() => tFor(locale), [locale]);
 
   return (
     <PreferencesContext value={{ locale, setLocale, t, theme, setTheme }}>

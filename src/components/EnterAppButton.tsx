@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { enterApp } from "@/lib/entry";
+import { useTranslation } from "@/lib/preferences";
 
 interface EnterAppButtonProps {
   label: string;
@@ -12,8 +13,11 @@ interface EnterAppButtonProps {
 /** Quiet text-style entry to the board: the only filled button on the landing is the hero CTA. */
 export default function EnterAppButton({ label, navigateHome = false }: EnterAppButtonProps) {
   const router = useRouter();
+  const { setLocale } = useTranslation();
 
   async function handleClick() {
+    // /en is English-only: carry that choice into the app, which defaults to French.
+    if (navigateHome) setLocale("en");
     await enterApp();
     if (navigateHome) router.push("/");
   }

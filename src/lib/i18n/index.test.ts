@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { plural, dictionaries, DEFAULT_LOCALE } from "./index";
+import { plural, dictionaries, DEFAULT_LOCALE, tFor } from "./index";
 
 describe("plural", () => {
   it("returns singular form for count 1", () => {
@@ -36,5 +36,12 @@ describe("dictionaries", () => {
 describe("DEFAULT_LOCALE", () => {
   it("is fr", () => {
     expect(DEFAULT_LOCALE).toBe("fr");
+  });
+});
+
+describe("tFor", () => {
+  it("reads the dictionary of the bound locale", () => {
+    expect(tFor("en")("footer_madeBy")).toBe(dictionaries.en.footer_madeBy);
+    expect(tFor("fr")("footer_madeBy")).toBe(dictionaries.fr.footer_madeBy);
   });
 });

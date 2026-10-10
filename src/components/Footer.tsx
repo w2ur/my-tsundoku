@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "@/lib/preferences";
-import { dictionaries, type Locale } from "@/lib/i18n";
+import { tFor, type Locale } from "@/lib/i18n";
 import { CODE_URL } from "@/lib/landing";
 
 interface FooterProps {
@@ -11,7 +11,7 @@ interface FooterProps {
 
 export default function Footer({ locale }: FooterProps) {
   const { t: preferred } = useTranslation();
-  const t = locale ? (key: keyof (typeof dictionaries)["fr"]) => dictionaries[locale][key] : preferred;
+  const t = locale ? tFor(locale) : preferred;
   const version = process.env.NEXT_PUBLIC_APP_VERSION;
 
   return (
