@@ -6,13 +6,14 @@
 //
 // Exit codes: 0 written, 2 could not run.
 import { mkdir, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 import sharp from "sharp";
 
 const BASE = "http://localhost:9877";
-const SEED = new URL("./screenshot-seed.json", import.meta.url).pathname;
-const LANDING = new URL("../public/landing/", import.meta.url).pathname;
-const MANIFEST = new URL("../public/screenshots/", import.meta.url).pathname;
+const SEED = fileURLToPath(new URL("./screenshot-seed.json", import.meta.url));
+const LANDING = fileURLToPath(new URL("../public/landing/", import.meta.url));
+const MANIFEST = fileURLToPath(new URL("../public/screenshots/", import.meta.url));
 const STAGES = ["a_acheter", "tsundoku", "bibliotheque", "revendre"];
 // First seeded title of each stage, in tab order: proves the pile is rendered.
 const STAGE_TITLES = ["Les Misérables", "À la recherche du temps perdu", "Madame Bovary", "Bel-Ami"];
@@ -80,12 +81,11 @@ async function main() {
         const shot = await page.screenshot();
         await webp(shot, `pile-${STAGES[i]}-${theme}`);
       }
-      // Board frame at 390: the default tab (first stage tab).
+      // Board frame at 390 (first stage tab): manifest only, the landing reuses pile-a_acheter.
       await tabs.nth(0).click();
       await page.getByText(STAGE_TITLES[0]).first().waitFor();
       await page.waitForTimeout(500);
       const board390 = await page.screenshot();
-      await webp(board390, `board-390-${theme}`);
 
       if (theme === "light") {
         // Manifest-only /add frame; the landing does not use it.

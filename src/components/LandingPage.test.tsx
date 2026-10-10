@@ -40,12 +40,12 @@ describe.each(["fr", "en"] as const)("LandingPage (%s)", (locale) => {
     expect(light.querySelector("source")!.getAttribute("media")).toBe("(min-width: 768px)");
     expect(light.querySelector("source")!.getAttribute("srcset")).toBe("/landing/board-1440-light.webp");
     const lightImg = light.querySelector("img")!;
-    expect(lightImg.getAttribute("src")).toBe("/landing/board-390-light.webp");
+    expect(lightImg.getAttribute("src")).toBe("/landing/pile-a_acheter-light.webp");
     expect(lightImg.getAttribute("loading")).toBeNull();
     expect(lightImg.getAttribute("alt")).toBe(content.screenshotAlt);
     const dark = figure.querySelector("picture.theme-dark-only")!;
     expect(dark.querySelector("source")!.getAttribute("srcset")).toBe("/landing/board-1440-dark.webp");
-    expect(dark.querySelector("img")!.getAttribute("src")).toBe("/landing/board-390-dark.webp");
+    expect(dark.querySelector("img")!.getAttribute("src")).toBe("/landing/pile-a_acheter-dark.webp");
     expect(dark.querySelector("img")!.getAttribute("loading")).toBe("lazy");
   });
 

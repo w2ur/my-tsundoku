@@ -63,7 +63,7 @@ export default function LandingPage({ locale }: LandingPageProps) {
                   height={900}
                 />
                 <img
-                  src={`${IMG}/board-390-${theme}.webp`}
+                  src={`${IMG}/pile-a_acheter-${theme}.webp`}
                   width={390}
                   height={844}
                   alt={content.screenshotAlt}
