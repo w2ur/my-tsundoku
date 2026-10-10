@@ -1,7 +1,9 @@
 import { db } from "@/lib/db";
 
-/** localStorage hint, value "app": lets the <head> script pick the surface before paint. */
-export const ENTRY_HINT_KEY = "tsundoku-entry";
+import { ENTRY_HINT_KEY, ENTRY_HINT_SCRIPT } from "./entry-hint";
+
+export { ENTRY_HINT_KEY, ENTRY_HINT_SCRIPT };
+
 /** db.settings key meaning "this device has entered the app". Dexie is the source of truth. */
 export const ENTERED_APP_SETTING = "enteredApp";
 
@@ -20,8 +22,6 @@ export function resolveEntry(
   if (books === undefined || enteredApp === undefined) return "unknown";
   return enteredApp ? "app" : "landing";
 }
-
-export const ENTRY_HINT_SCRIPT = `try{if(localStorage.getItem("${ENTRY_HINT_KEY}")==="app")document.documentElement.dataset.entry="app"}catch(e){}`;
 
 /**
  * Live-query reader for the setting. A missing row is `false`, not `undefined`:

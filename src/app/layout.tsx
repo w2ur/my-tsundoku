@@ -6,7 +6,7 @@ import { AuthProvider } from "@/lib/auth";
 import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import MotionProvider from "@/components/MotionProvider";
 import { LANDING } from "@/lib/landing";
-import { ENTRY_HINT_SCRIPT } from "@/lib/entry";
+import { ENTRY_HINT_SCRIPT } from "@/lib/entry-hint";
 import "./globals.css";
 
 const playfair = Playfair_Display({
