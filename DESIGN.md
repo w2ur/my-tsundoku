@@ -117,7 +117,7 @@ spreads to the landing, headings or buttons.
 - C16 — refused; forest is the only filled action and appears once per screen, amber keeps its single meaning
 - R8 — refused; buttons are 8px-radius rectangles, never pills
 - A10 — refused; text uses the solid `--muted` / `--subtle` tokens, never `text-ink/NN` or `text-forest/NN`
-- B9 — refused; no gradient, glass, glow or purple
+- B9 — refused; no gradient, glass, glow or purple in the interface. Generated book covers (`GeneratedCover.tsx`) are content, not chrome: their hues, violet included, are owner-sanctioned (2026-10-10)
 
 ## References
 
