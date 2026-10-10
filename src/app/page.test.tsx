@@ -5,6 +5,7 @@ import { join } from "node:path";
 
 vi.mock("@/components/HomeApp", () => ({ default: () => <p>board</p> }));
 vi.mock("@/components/EntryGate", () => ({ default: () => null }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 
 import Home from "./page";
 import { LANDING } from "@/lib/landing";

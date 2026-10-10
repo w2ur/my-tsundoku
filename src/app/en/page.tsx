@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import LandingSection from "@/components/LandingSection";
+import Footer from "@/components/Footer";
+import LandingPage from "@/components/LandingPage";
 import { LANDING } from "@/lib/landing";
 
 export const metadata: Metadata = {
@@ -28,12 +28,8 @@ export const metadata: Metadata = {
 export default function EnglishLanding() {
   return (
     <div className="min-h-screen bg-paper">
-      <LandingSection locale="en" />
-      <p className="pb-16 text-center text-sm">
-        <Link href="/" className="underline text-forest hover:opacity-80">
-          Open the app
-        </Link>
-      </p>
+      <LandingPage locale="en" />
+      <Footer locale="en" />
     </div>
   );
 }

@@ -37,6 +37,8 @@ npm run dev
 
 Open [http://localhost:9876](http://localhost:9876).
 
+A first visit (no books, no stored entry) opens on the landing page: the promise, a real board screenshot, the four piles, and a quiet "open the app" button. Adding a first book, or entering the app, switches the device to the board for good; the landing stays at `/en` for English readers.
+
 ### Environment Variables
 
 | Variable | Description |

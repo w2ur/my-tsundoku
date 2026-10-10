@@ -1,9 +1,17 @@
 "use client";
 
 import { useTranslation } from "@/lib/preferences";
+import { dictionaries, type Locale } from "@/lib/i18n";
+import { CODE_URL } from "@/lib/landing";
 
-export default function Footer() {
-  const { t } = useTranslation();
+interface FooterProps {
+  /** Overrides the stored preference: server-rendered pages with a fixed language (`/en`). */
+  locale?: Locale;
+}
+
+export default function Footer({ locale }: FooterProps) {
+  const { t: preferred } = useTranslation();
+  const t = locale ? (key: keyof (typeof dictionaries)["fr"]) => dictionaries[locale][key] : preferred;
   const version = process.env.NEXT_PUBLIC_APP_VERSION;
 
   return (
@@ -23,6 +31,15 @@ export default function Footer() {
           <span>v{version}</span>
         </>
       )}
+      {" · "}
+      <a
+        href={CODE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline hover:text-ink transition-colors"
+      >
+        {t("footer_code")}
+      </a>
       {" · "}
       <a
         href={`mailto:contact@my-tsundoku.app?subject=${encodeURIComponent("[Tsundoku] " + t("footer_mailtoSubject"))}`}
