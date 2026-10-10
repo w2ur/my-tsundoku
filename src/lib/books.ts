@@ -3,6 +3,13 @@ import { db } from "./db";
 import { enqueueUpsert, enqueueDelete } from "./sync";
 import { requestStoragePersistOnce } from "./storage-persist";
 import type { Book, Stage } from "./types";
+import { markEntryHint, persistEnteredApp } from "./entry";
+
+/** The shelf is no longer empty: client navigation must not flash the landing. */
+async function markEntered(): Promise<void> {
+  markEntryHint();
+  await persistEnteredApp();
+}
 
 export async function addBook(
   data: Pick<Book, "title" | "author" | "coverUrl"> & {
@@ -39,6 +46,7 @@ export async function addBook(
   };
   await db.books.add(book);
   enqueueUpsert(book);
+  await markEntered();
   // Fire-and-forget: request persistent storage after the first book is added
   requestStoragePersistOnce();
   return book;
@@ -110,6 +118,7 @@ export async function importBooks(
   for (const book of booksWithPosition) {
     enqueueUpsert(book);
   }
+  if (booksWithPosition.length > 0) await markEntered();
 }
 
 export function computeReorder(
