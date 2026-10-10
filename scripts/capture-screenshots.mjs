@@ -14,6 +14,8 @@ const SEED = new URL("./screenshot-seed.json", import.meta.url).pathname;
 const LANDING = new URL("../public/landing/", import.meta.url).pathname;
 const MANIFEST = new URL("../public/screenshots/", import.meta.url).pathname;
 const STAGES = ["a_acheter", "tsundoku", "bibliotheque", "revendre"];
+// First seeded title of each stage, in tab order: proves the pile is rendered.
+const STAGE_TITLES = ["Les Misérables", "À la recherche du temps perdu", "Madame Bovary", "Bel-Ami"];
 const DESKTOP = { width: 1440, height: 900 };
 const MOBILE = { width: 390, height: 844 };
 const SEEDED_TITLE = "Les Misérables"; // first stage, so visible once the first mobile tab is selected
@@ -73,24 +75,25 @@ async function main() {
       await page.getByText(SEEDED_TITLE).first().waitFor();
       for (let i = 0; i < STAGES.length; i++) {
         await tabs.nth(i).click();
+        await page.getByText(STAGE_TITLES[i]).first().waitFor();
         await page.waitForTimeout(500); // let the pile transition settle
         const shot = await page.screenshot();
         await webp(shot, `pile-${STAGES[i]}-${theme}`);
       }
       // Board frame at 390: the default tab (first stage tab).
       await tabs.nth(0).click();
+      await page.getByText(STAGE_TITLES[0]).first().waitFor();
       await page.waitForTimeout(500);
       const board390 = await page.screenshot();
       await webp(board390, `board-390-${theme}`);
 
-      await page.goto(`${BASE}/add`);
-      await ready(page, theme);
-      await page.evaluate(() => document.fonts.ready);
-      await page.waitForTimeout(500);
-      const add = await page.screenshot();
-      await webp(add, `add-${theme}`);
-
       if (theme === "light") {
+        // Manifest-only /add frame; the landing does not use it.
+        await page.goto(`${BASE}/add`);
+        await ready(page, theme);
+        await page.getByText("Ajouter un livre").first().waitFor();
+        await page.waitForTimeout(500);
+        const add = await page.screenshot();
         await writeFile(`${MANIFEST}screenshot-board.png`, board390);
         await writeFile(`${MANIFEST}screenshot-add.png`, add);
         console.log("wrote public/screenshots/screenshot-{board,add}.png");
