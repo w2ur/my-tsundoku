@@ -37,7 +37,7 @@ export default function LandingPage({ locale }: LandingPageProps) {
 
         <main>
           <section className="mx-auto max-w-2xl pt-12 text-center md:pt-24">
-            <h1 className="font-serif text-[40px] font-normal leading-[1.1] tracking-[-0.01em] text-forest md:text-[56px]">
+            <h1 className="font-serif text-[40px] font-normal leading-[1.1] tracking-[-0.01em] text-balance text-forest md:text-[56px]">
               {content.heroTitle}
             </h1>
             <p className="mt-4 text-base text-muted">{content.heroSubtitle}</p>
@@ -119,7 +119,7 @@ export default function LandingPage({ locale }: LandingPageProps) {
             <p className="mt-2 text-base text-muted">{content.scan.body}</p>
           </section>
 
-          <section className="mx-auto mt-12 max-w-2xl md:mt-12">
+          <section className="mx-auto mt-12 max-w-2xl">
             <h2 className="font-serif text-xl text-forest">{content.privacy.title}</h2>
             <p className="mt-2 text-base text-muted">{content.privacy.body}</p>
             <a
@@ -137,7 +137,21 @@ export default function LandingPage({ locale }: LandingPageProps) {
             <div className="mt-4 divide-y divide-border-subtle border-y border-border-subtle">
               {content.faq.map((item) => (
                 <details key={item.question} className="group py-3">
-                  <summary className="cursor-pointer text-base text-ink">{item.question}</summary>
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base text-ink [&::-webkit-details-marker]:hidden">
+                    {item.question}
+                    <svg
+                      aria-hidden="true"
+                      viewBox="0 0 20 20"
+                      className="h-4 w-4 shrink-0 text-muted transition-transform group-open:rotate-180"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m5 7.5 5 5 5-5" />
+                    </svg>
+                  </summary>
                   <p className="mt-2 text-base text-muted">{item.answer}</p>
                 </details>
               ))}
