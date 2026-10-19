@@ -37,12 +37,28 @@ REVOKE ALL ON cover_cleanup_queue FROM anon, authenticated;
 -- 2. Marks a tombstone whose content has been stripped.
 ALTER TABLE public.books ADD COLUMN IF NOT EXISTS purged_at timestamptz;
 
--- A restored book (deleted_at back to NULL) is no longer purged, so it can be
--- purged again if it is deleted later. A tombstone that is already purged stays
--- stripped even if a stale device pushes its old content back onto it.
+-- purged_at is written only by purge_soft_deleted_books (SECURITY DEFINER, runs
+-- as the owner): a client can neither set it on a fresh tombstone (which would
+-- make the purge skip it) nor clear it.
+-- A purged row cannot be undeleted by a stale push: an edit whose updated_at is
+-- not newer than the delete (a queued edit made before the book was deleted
+-- elsewhere) keeps deleted_at and updated_at as they are, so the row stays
+-- deleted and stripped. A genuinely newer edit is a restore: deleted_at goes
+-- back to NULL, purged_at is cleared, and the book can be purged again if it is
+-- deleted later. A tombstone that is already purged stays stripped even if a
+-- stale device pushes its old content back onto it. The trigger never touches
+-- cover_cleanup_queue (it runs as the client role, which has no rights on it).
 CREATE OR REPLACE FUNCTION keep_purge_state_consistent()
 RETURNS trigger AS $$
 BEGIN
+  IF current_user IN ('anon', 'authenticated') THEN
+    NEW.purged_at := CASE WHEN TG_OP = 'UPDATE' THEN OLD.purged_at ELSE NULL END;
+  END IF;
+  IF TG_OP = 'UPDATE' AND OLD.purged_at IS NOT NULL AND NEW.deleted_at IS NULL
+     AND NEW.updated_at <= OLD.deleted_at THEN
+    NEW.deleted_at := OLD.deleted_at;
+    NEW.updated_at := OLD.updated_at;
+  END IF;
   IF NEW.deleted_at IS NULL THEN
     NEW.purged_at := NULL;
   ELSIF TG_OP = 'UPDATE' AND OLD.purged_at IS NOT NULL THEN

@@ -166,7 +166,7 @@ const en: Record<TranslationKeys, string> = {
   account_deleteConfirm: "Are you sure? This action cannot be undone.",
   account_deleting: "Deleting...",
   account_deleteError: "Error deleting account. Try again.",
-  account_coversNotRemoved: "Your account was deleted, but some cover photos could not be removed right now. They will be purged automatically within a day.",
+  account_coversNotRemoved: "Your account was deleted, but some cover photos could not be removed right now. They will be purged automatically within a day or two.",
   account_coversUnqueued: "Your account was deleted, but some cover photos could not be removed and their removal could not be scheduled. Contact us (Contact link) to have them erased.",
   settings_cloudBackupNote: "Your books are automatically backed up to the cloud.",
   sw_updateAvailable: "Update available",

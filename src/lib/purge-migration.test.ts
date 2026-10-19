@@ -48,4 +48,34 @@ describe("007_purge_soft_deleted.sql", () => {
     expect(sql).toContain("cardinality(paths) > 1000");
     expect(sql).toContain("RAISE EXCEPTION");
   });
+
+  describe("keep_purge_state_consistent trigger", () => {
+    const start = sql.indexOf("CREATE OR REPLACE FUNCTION keep_purge_state_consistent");
+    const trigger = sql.slice(start, sql.indexOf("DROP TRIGGER IF EXISTS", start));
+
+    it("stops client roles from setting or clearing purged_at, before any other logic", () => {
+      const guard = trigger.indexOf("IF current_user IN ('anon', 'authenticated') THEN");
+      expect(guard).toBeGreaterThan(-1);
+      expect(trigger).toContain(
+        "NEW.purged_at := CASE WHEN TG_OP = 'UPDATE' THEN OLD.purged_at ELSE NULL END;",
+      );
+      expect(guard).toBeLessThan(trigger.indexOf("IF NEW.deleted_at IS NULL THEN"));
+    });
+
+    it("keeps a purged row deleted when a stale edit (not newer than the delete) arrives", () => {
+      const stale = trigger.indexOf(
+        "OLD.purged_at IS NOT NULL AND NEW.deleted_at IS NULL\n     AND NEW.updated_at <= OLD.deleted_at",
+      );
+      expect(stale).toBeGreaterThan(-1);
+      expect(trigger).toContain("NEW.deleted_at := OLD.deleted_at;");
+      expect(trigger).toContain("NEW.updated_at := OLD.updated_at;");
+      // Must run before the restore branch that clears purged_at.
+      expect(stale).toBeLessThan(trigger.indexOf("IF NEW.deleted_at IS NULL THEN"));
+    });
+
+    it("still restores on a newer edit and never writes the cleanup queue", () => {
+      expect(trigger).toContain("IF NEW.deleted_at IS NULL THEN\n    NEW.purged_at := NULL;");
+      expect(trigger).not.toContain("cover_cleanup_queue");
+    });
+  });
 });
