@@ -1,7 +1,16 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { drainCoverQueue } from "@/lib/cover-cleanup";
 
 export const dynamic = "force-dynamic";
+// Vercel Hobby allows up to 60 s: enough to drain a full page of 500 queue rows.
+export const maxDuration = 60;
+
+function bearerMatches(header: string | null, secret: string): boolean {
+  const given = Buffer.from(header?.trim() ?? "");
+  const expected = Buffer.from(`Bearer ${secret}`);
+  return given.length === expected.length && timingSafeEqual(given, expected);
+}
 
 /**
  * Daily cron: deletes the cover files queued by the SQL purge of soft-deleted
@@ -14,7 +23,7 @@ export async function GET(request: Request) {
   if (!secret) {
     return NextResponse.json({ error: "CRON_SECRET not configured" }, { status: 500 });
   }
-  if (request.headers.get("authorization")?.trim() !== `Bearer ${secret}`) {
+  if (!bearerMatches(request.headers.get("authorization"), secret)) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 

@@ -16,11 +16,22 @@ describe("007_purge_soft_deleted.sql", () => {
     expect(sql).toContain("$$SELECT public.purge_soft_deleted_books()$$");
   });
 
-  it("queues covers before deleting the books that reference them", () => {
-    expect(sql.indexOf("INSERT INTO public.cover_cleanup_queue")).toBeGreaterThan(-1);
-    expect(sql.indexOf("INSERT INTO public.cover_cleanup_queue")).toBeLessThan(
-      sql.indexOf("DELETE FROM public.books"),
-    );
+  it("strips tombstones and queues their covers in a single statement", () => {
+    // One WITH ... INSERT statement: no window in which a cover is queued but
+    // its book survives, or the book is stripped but its cover never queued.
+    const body = sql.slice(sql.indexOf("CREATE OR REPLACE FUNCTION purge_soft_deleted_books"));
+    expect(body).toMatch(/WITH victims AS[\s\S]*stripped AS \(\s*UPDATE public\.books[\s\S]*queued AS \(\s*INSERT INTO public\.cover_cleanup_queue/);
+    expect(sql).not.toMatch(/DELETE FROM public\.books/);
+  });
+
+  it("keeps a tombstone (never hard-deletes) and marks it purged", () => {
+    expect(sql).toContain("ADD COLUMN IF NOT EXISTS purged_at");
+    expect(sql).toContain("AND purged_at IS NULL");
+    expect(sql).toContain("purged_at = now()");
+  });
+
+  it("only queues covers that point at the covers bucket", () => {
+    expect(sql).toContain("LIKE '%/storage/v1/object/public/covers/%'");
   });
 
   it("locks the queue and the purge away from client roles", () => {
@@ -28,7 +39,13 @@ describe("007_purge_soft_deleted.sql", () => {
     expect(sql).toContain("REVOKE ALL ON FUNCTION purge_soft_deleted_books(integer) FROM PUBLIC, anon, authenticated");
   });
 
-  it("restricts record_cover_leftovers to the caller's own prefix", () => {
-    expect(sql).toContain("p LIKE auth.uid()::text || '/%'");
+  it("restricts record_cover_leftovers to the caller's own prefix and plain files", () => {
+    expect(sql).toContain("p = uid || '/'");
+    expect(sql).toContain("p ~ ('^' || uid || '/[^/]+\\.jpg$')");
+  });
+
+  it("caps record_cover_leftovers at 1000 paths and refuses more", () => {
+    expect(sql).toContain("cardinality(paths) > 1000");
+    expect(sql).toContain("RAISE EXCEPTION");
   });
 });

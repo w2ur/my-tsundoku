@@ -995,6 +995,79 @@ describe("pullRemoteChanges: legacy tombstones", () => {
 });
 
 // ============================================================
+// Purged tombstones (migration 007): content stripped, row kept
+// ============================================================
+
+describe("pullRemoteChanges: purged tombstones", () => {
+  const storage: Record<string, string> = {};
+  // What purge_soft_deleted_books() leaves behind after the retention period.
+  const purgedRow = {
+    id: "b1",
+    user_id: "u1",
+    title: "",
+    author: "",
+    cover_url: "",
+    stage: "tsundoku",
+    position: 0,
+    is_reading: false,
+    notes: null,
+    store_url: null,
+    isbn: null,
+    ol_work_id: null,
+    created_at: "2023-11-14T22:13:20.000Z",
+    updated_at: "2023-11-14T22:30:00.000Z",
+    deleted_at: "2023-11-15T00:00:00.000Z",
+    purged_at: "2023-12-20T03:30:00.000Z",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    for (const key of Object.keys(storage)) delete storage[key];
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => storage[key] ?? null,
+      setItem: (key: string, value: string) => { storage[key] = value; },
+      removeItem: (key: string) => { delete storage[key]; },
+    });
+  });
+
+  it("deletes the stale local copy of a device that did not sync for over 30 days", async () => {
+    // Cursor older than the delete: the incremental query still returns the row.
+    storage["tsundoku_last_synced_u1"] = "2023-11-01T00:00:00.000Z";
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    const chain = mockChain({ data: [purgedRow], error: null });
+    mockSupabase.from.mockReturnValue(chain);
+    mockDb.books.get.mockResolvedValueOnce({
+      ...testBook,
+      id: "b1",
+      updatedAt: new Date("2023-11-14T22:30:00.000Z").getTime(),
+    });
+
+    await pullRemoteChanges();
+
+    expect(chain.gt).toHaveBeenCalledWith("updated_at", "2023-11-01T00:00:00.000Z");
+    expect(mockDb.books.delete).toHaveBeenCalledWith("b1");
+    expect(mockDb.books.put).not.toHaveBeenCalled();
+    expect(mockDb.sync_queue.add).not.toHaveBeenCalled();
+  });
+
+  it("never stores a stripped tombstone locally, so the app cannot display it", async () => {
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockSupabase.from.mockReturnValue(mockChain({ data: [purgedRow], error: null }));
+    mockDb.books.get.mockResolvedValueOnce(undefined);
+
+    await pullRemoteChanges();
+
+    expect(mockDb.books.put).not.toHaveBeenCalled();
+  });
+
+  it("maps a stripped tombstone to a book that carries deletedAt", () => {
+    const book = mapSupabaseToBook(purgedRow);
+    expect(book.deletedAt).toBe(new Date("2023-11-15T00:00:00.000Z").getTime());
+    expect(book.title).toBe("");
+  });
+});
+
+// ============================================================
 // 3e: startSyncListeners
 // ============================================================
 
