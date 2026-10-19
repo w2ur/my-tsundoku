@@ -84,7 +84,7 @@ describe("deleteAccount cover cleanup", () => {
     expect(mockRpc).toHaveBeenCalledWith("delete_own_account");
   });
 
-  // Regression: pending — Storage remove() answers 200 with only the objects it
+  // Regression: 78a71d0 — Storage remove() answers 200 with only the objects it
   // deleted, so an RLS-refused file looked like a success.
   it("queues the files a 200 remove() silently skipped", async () => {
     mockRemove.mockResolvedValue({ data: [{ name: "u1/a.jpg" }], error: null });
@@ -101,7 +101,7 @@ describe("deleteAccount cover cleanup", () => {
     });
   });
 
-  // Regression: pending — the listing is capped at 1000 files, so a full page
+  // Regression: 78a71d0 — the listing is capped at 1000 files, so a full page
   // means more may remain and only the prefix (which the drainer pages) covers them.
   it("queues the whole prefix when the listing hit its 1000-file limit", async () => {
     const names = Array.from({ length: 1000 }, (_, i) => `${i}.jpg`);
