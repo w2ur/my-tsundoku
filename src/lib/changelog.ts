@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.8.1",
+    date: "2026-10-19",
+    changes: {
+      fr: [
+        "Les livres supprimés sont maintenant effacés définitivement après 30 jours",
+        "Si des photos de couverture ne peuvent pas être retirées à la suppression du compte, vous en êtes informé",
+      ],
+      en: [
+        "Deleted books are now erased for good after 30 days",
+        "If cover photos can't be removed when you delete your account, you are told",
+      ],
+    },
+  },
+  {
     version: "2.8.0",
     date: "2026-10-10",
     changes: {

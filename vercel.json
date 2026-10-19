@@ -3,6 +3,10 @@
     {
       "path": "/api/keepalive",
       "schedule": "0 12 * * *"
+    },
+    {
+      "path": "/api/purge-covers",
+      "schedule": "0 13 * * *"
     }
   ]
 }
