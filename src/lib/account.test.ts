@@ -47,7 +47,7 @@ describe("deleteAccount cover cleanup", () => {
     expect(mockRpc).not.toHaveBeenCalledWith("record_cover_leftovers", expect.anything());
   });
 
-  // Regression: pending-commit — a storage remove() error used to be swallowed,
+  // Regression: d29c80f — a storage remove() error used to be swallowed,
   // so the account vanished while the photos stayed public and nobody was told.
   it("surfaces a storage remove error, logs it and records the leftovers", async () => {
     mockRemove.mockResolvedValue({ data: null, error: { message: "boom" } });
