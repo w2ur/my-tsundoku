@@ -167,6 +167,7 @@ const fr = {
   account_deleting: "Suppression...",
   account_deleteError: "Erreur lors de la suppression. Réessayez.",
   account_coversNotRemoved: "Votre compte a été supprimé, mais certaines photos de couverture n'ont pas pu être retirées pour le moment. Elles seront purgées automatiquement sous 24 h.",
+  account_coversUnqueued: "Votre compte a été supprimé, mais certaines photos de couverture n'ont pas pu être retirées et leur suppression n'a pas pu être programmée. Contactez-nous (lien Contact) pour les faire effacer.",
   settings_cloudBackupNote: "Vos livres sont automatiquement sauvegardés dans le cloud.",
   sw_updateAvailable: "Mise à jour disponible",
   sw_updateReload: "Recharger",

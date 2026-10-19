@@ -13,11 +13,11 @@ export const changelog: ChangelogEntry[] = [
     changes: {
       fr: [
         "Les livres supprimés sont maintenant effacés définitivement après 30 jours",
-        "Si des photos de couverture ne peuvent pas être retirées à la suppression du compte, vous en êtes informé",
+        "Si des photos de couverture ne peuvent pas être retirées à la suppression du compte, vous en êtes informé, y compris quand leur suppression ne peut pas être programmée",
       ],
       en: [
         "Deleted books are now erased for good after 30 days",
-        "If cover photos can't be removed when you delete your account, you are told",
+        "If cover photos can't be removed when you delete your account, you are told, including when their removal can't be scheduled",
       ],
     },
   },

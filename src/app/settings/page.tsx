@@ -23,7 +23,7 @@ import {
   type SyncStatus,
 } from "@/lib/sync";
 import type { SyncFailure } from "@/lib/db";
-import { deleteAccount } from "@/lib/account";
+import { deleteAccount, type CoversCleanup } from "@/lib/account";
 import { CODE_URL } from "@/lib/landing";
 
 export default function SettingsPage() {
@@ -102,15 +102,15 @@ export default function SettingsPage() {
   // Task 21: Delete account
   const [deleteState, setDeleteState] = useState<"idle" | "confirming" | "deleting" | "error">("idle");
 
-  const [coversNotRemoved, setCoversNotRemoved] = useState(false);
+  const [coversCleanup, setCoversCleanup] = useState<CoversCleanup>("removed");
 
   async function handleDeleteAccount() {
     setDeleteState("deleting");
-    const { error, coversNotRemoved: leftovers } = await deleteAccount();
+    const { error, coversCleanup: cleanup } = await deleteAccount();
     if (error) {
       setDeleteState("error");
     } else {
-      setCoversNotRemoved(leftovers);
+      setCoversCleanup(cleanup);
     }
     // On success, signOut triggers onAuthStateChange which resets the UI
   }
@@ -355,9 +355,9 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
-            {coversNotRemoved && (
+            {coversCleanup !== "removed" && (
               <p role="status" className="mt-3 text-xs text-danger">
-                {t("account_coversNotRemoved")}
+                {t(coversCleanup === "queued" ? "account_coversNotRemoved" : "account_coversUnqueued")}
               </p>
             )}
           </section>
