@@ -53,6 +53,7 @@ describe("007_purge_soft_deleted.sql", () => {
     const start = sql.indexOf("CREATE OR REPLACE FUNCTION keep_purge_state_consistent");
     const trigger = sql.slice(start, sql.indexOf("DROP TRIGGER IF EXISTS", start));
 
+    // Regression: 894a58c — client could forge or clear purged_at
     it("stops client roles from setting or clearing purged_at, before any other logic", () => {
       const guard = trigger.indexOf("IF current_user IN ('anon', 'authenticated') THEN");
       expect(guard).toBeGreaterThan(-1);
@@ -62,6 +63,7 @@ describe("007_purge_soft_deleted.sql", () => {
       expect(guard).toBeLessThan(trigger.indexOf("IF NEW.deleted_at IS NULL THEN"));
     });
 
+    // Regression: 894a58c — stale queued edit undeleted a purged book
     it("keeps a purged row deleted when a stale edit (not newer than the delete) arrives", () => {
       const stale = trigger.indexOf(
         "OLD.purged_at IS NOT NULL AND NEW.deleted_at IS NULL\n     AND NEW.updated_at <= OLD.deleted_at",
