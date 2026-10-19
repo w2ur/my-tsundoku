@@ -166,6 +166,7 @@ const fr = {
   account_deleteConfirm: "Êtes-vous sûr ? Cette action est irréversible.",
   account_deleting: "Suppression...",
   account_deleteError: "Erreur lors de la suppression. Réessayez.",
+  account_coversNotRemoved: "Votre compte a été supprimé, mais certaines photos de couverture n'ont pas pu être retirées pour le moment. Elles seront purgées automatiquement sous 24 h.",
   settings_cloudBackupNote: "Vos livres sont automatiquement sauvegardés dans le cloud.",
   sw_updateAvailable: "Mise à jour disponible",
   sw_updateReload: "Recharger",

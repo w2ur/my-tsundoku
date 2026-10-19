@@ -102,11 +102,15 @@ export default function SettingsPage() {
   // Task 21: Delete account
   const [deleteState, setDeleteState] = useState<"idle" | "confirming" | "deleting" | "error">("idle");
 
+  const [coversNotRemoved, setCoversNotRemoved] = useState(false);
+
   async function handleDeleteAccount() {
     setDeleteState("deleting");
-    const { error } = await deleteAccount();
+    const { error, coversNotRemoved: leftovers } = await deleteAccount();
     if (error) {
       setDeleteState("error");
+    } else {
+      setCoversNotRemoved(leftovers);
     }
     // On success, signOut triggers onAuthStateChange which resets the UI
   }
@@ -351,6 +355,11 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
+            {coversNotRemoved && (
+              <p role="status" className="mt-3 text-xs text-danger">
+                {t("account_coversNotRemoved")}
+              </p>
+            )}
           </section>
         )}
 
