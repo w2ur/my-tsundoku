@@ -11,8 +11,8 @@
 --
 -- BEFORE THE FIRST PURGE (stripping cannot be undone): count and export the
 -- tombstones that will be stripped, in the dashboard SQL editor:
---   SELECT count(*) FROM books WHERE deleted_at < now() - interval '30 days' AND purged_at IS NULL;
---   then export  SELECT * FROM books WHERE deleted_at < now() - interval '30 days' AND purged_at IS NULL;  as CSV.
+--   SELECT count(*) FROM books WHERE deleted_at < now() - interval '30 days';
+--   then export  SELECT * FROM books WHERE deleted_at < now() - interval '30 days';  as CSV.
 -- Applying this file schedules the first run at 03:30 UTC; do the export first.
 --
 -- RETENTION: the one place the grace period lives is the default of
