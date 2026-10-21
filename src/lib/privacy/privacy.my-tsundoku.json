@@ -1,7 +1,7 @@
 {
   "block": "site",
   "site": "www.my-tsundoku.app",
-  "updated": "2026-10-19",
+  "updated": "2026-10-21",
   "status": "draft — owner approval required",
   "routes": {
     "fr": "/confidentialite",
@@ -60,12 +60,12 @@
       "titleFr": "Si vous activez la synchronisation",
       "paragraphs": [
         "To find the same library on several devices, you sign in with your e-mail address: a one-time code is sent to it, with no password. Your library is then copied to [Supabase](supabase), which provides the database, the sign-in and the image storage, in its West EU region, in Ireland.",
-        "What is sent: your e-mail address; for each book, the title, the author, the ISBN, the column it sits in and its place there, whether you are reading it, your notes, the shop link if you entered one, the cover address, and the dates it was added, changed and deleted; and the cover photos you take. Your session is kept in your browser's local storage.",
+        "What is sent: your e-mail address; for each book, the title, the author, the ISBN, its Open Library identifier if it has one, the column it sits in and its place there, whether you are reading it, your notes, the shop link if you entered one, the cover address, and the dates it was added, changed and deleted; and the cover photos you take. Your session is kept in your browser's local storage.",
         "Legal basis: providing the sync you asked for by signing in."
       ],
       "paragraphsFr": [
         "Pour retrouver la même bibliothèque sur plusieurs appareils, vous vous connectez avec votre adresse e-mail : un code à usage unique vous y est envoyé, sans mot de passe. Votre bibliothèque est alors copiée chez [Supabase](supabase), qui fournit la base de données, la connexion et le stockage des images, dans sa région Europe de l'Ouest, en Irlande.",
-        "Ce qui est envoyé : votre adresse e-mail ; pour chaque livre, le titre, l'auteur, l'ISBN, la colonne où il se trouve et sa place dans cette colonne, s'il est en cours de lecture, vos notes, le lien vers une boutique si vous en avez saisi un, l'adresse de la couverture, et ses dates d'ajout, de modification et de suppression ; et les photos de couverture que vous prenez. Votre session est gardée dans le stockage local de votre navigateur.",
+        "Ce qui est envoyé : votre adresse e-mail ; pour chaque livre, le titre, l'auteur, l'ISBN, son identifiant Open Library s'il en a un, la colonne où il se trouve et sa place dans cette colonne, s'il est en cours de lecture, vos notes, le lien vers une boutique si vous en avez saisi un, l'adresse de la couverture, et ses dates d'ajout, de modification et de suppression ; et les photos de couverture que vous prenez. Votre session est gardée dans le stockage local de votre navigateur.",
         "Base légale : la fourniture de la synchronisation que vous demandez en vous connectant."
       ]
     },
@@ -85,10 +85,10 @@
       "title": "Cover photos",
       "titleFr": "Photos de couverture",
       "paragraphs": [
-        "A cover photo is cropped and reduced to 400 pixels at most before it is sent, and stored in a folder named after your account. Anyone who has its exact address can open it without signing in; that address contains two long random identifiers, and it is listed nowhere, not even on a public shelf."
+        "A cover photo is cropped and reduced to 400 pixels at most before it is sent, and stored in a folder named after your account. Anyone who has its exact address can open it without signing in; that address contains your account's long random identifier and the book's, and it is listed nowhere, not even on a public shelf."
       ],
       "paragraphsFr": [
-        "Une photo de couverture est recadrée et réduite à 400 pixels au plus avant l'envoi, puis rangée dans un dossier au nom de votre compte. Quiconque possède son adresse exacte peut l'ouvrir sans se connecter ; cette adresse contient deux longs identifiants aléatoires et n'est listée nulle part, pas même sur une étagère publique."
+        "Une photo de couverture est recadrée et réduite à 400 pixels au plus avant l'envoi, puis rangée dans un dossier au nom de votre compte. Quiconque possède son adresse exacte peut l'ouvrir sans se connecter ; cette adresse contient le long identifiant aléatoire de votre compte et celui du livre, et n'est listée nulle part, pas même sur une étagère publique."
       ]
     },
     {
@@ -96,11 +96,11 @@
       "title": "The shared catalogue",
       "titleFr": "Le catalogue commun",
       "paragraphs": [
-        "Contributing to the shared catalogue is on by default. When a book you added by hand (without an Open Library record) is synced, its title, author and ISBN are copied into a shared catalogue that helps other readers find it. The copy carries no link to your account, so it stays in place if you delete your account.",
+        "Contributing to the shared catalogue is on by default. When a book that has no Open Library record (one you typed in yourself, or found through the BnF or the shared catalogue) is synced, its title, author and ISBN are copied into a shared catalogue that helps other readers find it. The copy carries no link to your account, so it stays in place if you delete your account.",
         "To stop it: Settings → « Contribute to community catalog ». Books already copied stay in the catalogue."
       ],
       "paragraphsFr": [
-        "La contribution au catalogue commun est activée par défaut. Quand un livre que vous avez ajouté à la main (sans fiche Open Library) est synchronisé, son titre, son auteur et son ISBN sont copiés dans un catalogue partagé qui aide les autres lecteurs à le trouver. Cette copie ne porte aucun lien avec votre compte ; elle reste donc en place si vous supprimez votre compte.",
+        "La contribution au catalogue commun est activée par défaut. Quand un livre sans fiche Open Library (saisi par vous, ou trouvé via la BnF ou le catalogue commun) est synchronisé, son titre, son auteur et son ISBN sont copiés dans un catalogue partagé qui aide les autres lecteurs à le trouver. Cette copie ne porte aucun lien avec votre compte ; elle reste donc en place si vous supprimez votre compte.",
         "Pour l'arrêter : Paramètres → « Contribuer au catalogue communautaire ». Les livres déjà copiés restent dans le catalogue."
       ]
     },
