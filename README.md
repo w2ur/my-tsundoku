@@ -70,6 +70,7 @@ src/
 │   ├── add/               # Add book (manual entry, barcode scan)
 │   ├── book/[id]/         # Book detail & edit
 │   ├── settings/          # Settings & backup
+│   ├── confidentialite/   # Privacy notice (FR); /en/privacy is the English one
 │   └── ~offline/          # Offline fallback page
 ├── components/    # Reusable UI components
 ├── hooks/         # Custom React hooks (useBooks, useBook, useBooksByStage, useIsMobile)

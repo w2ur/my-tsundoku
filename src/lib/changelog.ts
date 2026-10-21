@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.0",
+    date: "2026-10-21",
+    changes: {
+      fr: [
+        "Une page Confidentialité détaille quelles données sont traitées, où elles vont et comment exercer vos droits ; elle est liée depuis le pied de page",
+      ],
+      en: [
+        "A Privacy page explains what data is handled, where it goes and how to use your rights; it is linked from the footer",
+      ],
+    },
+  },
+  {
     version: "2.8.1",
     date: "2026-10-19",
     changes: {

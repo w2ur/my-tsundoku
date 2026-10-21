@@ -18,6 +18,7 @@ function allStrings(c: LandingContent): string[] {
     c.privacy.title,
     c.privacy.body,
     c.privacy.codeLinkLabel,
+    c.privacy.noticeLinkLabel,
     c.faqTitle,
     ...c.faq.flatMap((f) => [f.question, f.answer]),
     c.screenshotAlt,

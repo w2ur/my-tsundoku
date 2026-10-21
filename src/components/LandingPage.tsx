@@ -3,6 +3,7 @@ import EnterAppButton from "@/components/EnterAppButton";
 import StageIcon from "@/components/StageIcon";
 import { STAGE_CONFIG } from "@/lib/constants";
 import { CODE_URL, LANDING } from "@/lib/landing";
+import { PRIVACY_PATHS } from "@/lib/privacy/routes";
 
 interface LandingPageProps {
   locale: "fr" | "en";
@@ -117,14 +118,22 @@ export default function LandingPage({ locale }: LandingPageProps) {
           <section className="mx-auto mt-12 max-w-2xl">
             <h2 className="font-serif text-xl text-forest">{content.privacy.title}</h2>
             <p className="mt-2 text-base text-muted">{content.privacy.body}</p>
-            <a
-              href={CODE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-block text-sm text-forest underline underline-offset-4 hover:text-ink"
-            >
-              {content.privacy.codeLinkLabel}
-            </a>
+            <p className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+              <a
+                href={PRIVACY_PATHS[locale]}
+                className="text-forest underline underline-offset-4 hover:text-ink"
+              >
+                {content.privacy.noticeLinkLabel}
+              </a>
+              <a
+                href={CODE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-forest underline underline-offset-4 hover:text-ink"
+              >
+                {content.privacy.codeLinkLabel}
+              </a>
+            </p>
           </section>
 
           <section className="mx-auto mb-12 mt-12 max-w-2xl md:mb-24">

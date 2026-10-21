@@ -42,4 +42,15 @@ describe("Footer", () => {
       expect.stringContaining("mailto:contact@my-tsundoku.app")
     );
   });
+
+  it("links the privacy notice in the stored language", () => {
+    renderWithPreferences(<Footer />);
+    const link = screen.getByRole("link", { name: "Confidentialité" });
+    expect(link).toHaveAttribute("href", "/confidentialite");
+  });
+
+  it("links the English notice when the page forces English", () => {
+    renderWithPreferences(<Footer locale="en" />);
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/en/privacy");
+  });
 });

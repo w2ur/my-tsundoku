@@ -9,6 +9,7 @@ import Footer from "./Footer";
 import { PreferencesProvider } from "@/lib/preferences";
 import { LANDING, CODE_URL } from "@/lib/landing";
 import { STAGES } from "@/lib/constants";
+import { PRIVACY_PATHS } from "@/lib/privacy/routes";
 
 function page(locale: "fr" | "en"): { html: string; doc: Document } {
   const html = renderToStaticMarkup(
@@ -71,6 +72,12 @@ describe.each(["fr", "en"] as const)("LandingPage (%s)", (locale) => {
     expect(html).not.toMatch(/text-(ink|forest)\/\d+/);
   });
 
+  it("links the privacy card to the notice in the page language", () => {
+    const { doc } = page(locale);
+    const link = doc.querySelector(`a[href="${PRIVACY_PATHS[locale]}"]`);
+    expect(link?.textContent).toBe(content.privacy.noticeLinkLabel);
+  });
+
   it("embeds parseable SoftwareApplication JSON-LD that cannot close its script tag", () => {
     const { doc } = page(locale);
     const script = doc.querySelector('script[type="application/ld+json"]');
@@ -94,5 +101,7 @@ describe("Footer locale override", () => {
     expect(html).toContain("Made with care by");
     expect(html).toContain("Source code");
     expect(html).toContain(CODE_URL);
+    expect(html).toContain(`href="${PRIVACY_PATHS.en}"`);
+    expect(html).toContain(">Privacy</a>");
   });
 });

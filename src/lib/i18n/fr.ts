@@ -42,6 +42,7 @@ const fr = {
   header_settings: "Paramètres",
   footer_mailtoSubject: "Retour utilisateur",
   footer_code: "Code source",
+  footer_privacy: "Confidentialité",
   form_title: "Titre",
   form_titlePlaceholder: "Titre du livre",
   form_noResults: "Aucun résultat sur Open Library.",

@@ -10,6 +10,8 @@ import {
   resolveEntry,
   type PrivacySources,
 } from "./notice";
+import { PRIVACY_PATHS } from "./routes";
+import sitemap from "@/app/sitemap";
 
 const DIR = path.dirname(new URL(import.meta.url).pathname);
 const VENDORED = readdirSync(DIR).filter((f) => f.endsWith(".json"));
@@ -173,5 +175,17 @@ describe("composeNotice", () => {
     for (const locale of ["fr", "en"] as const) {
       expect(textOf(locale)).not.toMatch(/\]\(/);
     }
+  });
+});
+
+describe("PRIVACY_PATHS", () => {
+  it("matches the routes of the vendored site file", () => {
+    expect(PRIVACY_PATHS).toEqual(PRIVACY_SOURCES.site.routes);
+  });
+
+  it("are listed in the sitemap", () => {
+    const urls = sitemap().map((e) => e.url);
+    expect(urls).toContain(`https://www.my-tsundoku.app${PRIVACY_PATHS.fr}`);
+    expect(urls).toContain(`https://www.my-tsundoku.app${PRIVACY_PATHS.en}`);
   });
 });

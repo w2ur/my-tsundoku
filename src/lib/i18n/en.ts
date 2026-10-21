@@ -44,6 +44,7 @@ const en: Record<TranslationKeys, string> = {
   header_settings: "Settings",
   footer_mailtoSubject: "User feedback",
   footer_code: "Source code",
+  footer_privacy: "Privacy",
   form_title: "Title",
   form_titlePlaceholder: "Book title",
   form_noResults: "No results on Open Library.",

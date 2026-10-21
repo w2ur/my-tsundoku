@@ -24,7 +24,7 @@ export interface LandingContent {
   pilesTitle: string;
   piles: LandingPile[];
   scan: { title: string; body: string };
-  privacy: { title: string; body: string; codeLinkLabel: string };
+  privacy: { title: string; body: string; codeLinkLabel: string; noticeLinkLabel: string };
   faqTitle: string;
   faq: LandingFaqItem[];
   screenshotAlt: string;
@@ -53,6 +53,7 @@ const FR: LandingContent = {
     title: "Vos données restent chez vous",
     body: "Tout est stocké sur votre appareil et fonctionne hors ligne. L’application s’installe sur votre téléphone comme une app native, et la synchronisation entre appareils reste optionnelle. My Tsundoku est un logiciel libre (AGPL), sans publicité, avec une mesure d’audience anonyme.",
     codeLinkLabel: "Voir le code source",
+    noticeLinkLabel: "Lire la politique de confidentialité",
   },
   faqTitle: "Questions fréquentes",
   faq: [
@@ -104,6 +105,7 @@ const EN: LandingContent = {
     title: "Your data stays with you",
     body: "Everything is stored on your device and works offline. Install it on your phone like a native app; syncing across devices stays optional. My Tsundoku is free software (AGPL), with no ads and only anonymous audience measurement.",
     codeLinkLabel: "See the source code",
+    noticeLinkLabel: "Read the privacy notice",
   },
   faqTitle: "Common questions",
   faq: [
