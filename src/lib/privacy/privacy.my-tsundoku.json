@@ -1,0 +1,155 @@
+{
+  "block": "site",
+  "site": "www.my-tsundoku.app",
+  "updated": "2026-10-19",
+  "status": "draft — owner approval required",
+  "routes": {
+    "fr": "/confidentialite",
+    "en": "/en/privacy"
+  },
+  "compose": [
+    "site:what-this-covers",
+    "common:editor",
+    "hosts:host-vercel",
+    "site:on-device",
+    "site:sync",
+    "site:deleted-books",
+    "site:covers",
+    "site:catalogue",
+    "site:public-shelf",
+    "site:lookups",
+    "site:captcha",
+    "common:analytics",
+    "site:export-and-delete",
+    "common:rights",
+    "common:contact",
+    "common:changes"
+  ],
+  "links": {
+    "supabase": "https://supabase.com/",
+    "openlibrary": "https://openlibrary.org/",
+    "bnf": "https://catalogue.bnf.fr/",
+    "turnstile": "https://www.cloudflare.com/products/turnstile/"
+  },
+  "sections": [
+    {
+      "id": "what-this-covers",
+      "title": "What this page covers",
+      "titleFr": "Ce que couvre cette page",
+      "paragraphs": [
+        "This page covers My Tsundoku, the app and its site at www.my-tsundoku.app."
+      ],
+      "paragraphsFr": [
+        "Cette page couvre My Tsundoku, l'application et son site, à l'adresse www.my-tsundoku.app."
+      ]
+    },
+    {
+      "id": "on-device",
+      "title": "By default, on your device",
+      "titleFr": "Par défaut, sur votre appareil",
+      "paragraphs": [
+        "Without an account, your books, notes and settings are stored in your browser's own database on this device, and nothing from your library leaves it, apart from the searches described below. The app sets no cookie."
+      ],
+      "paragraphsFr": [
+        "Sans compte, vos livres, vos notes et vos réglages sont enregistrés dans la base de votre navigateur, sur cet appareil, et rien de votre bibliothèque n'en sort, à part les recherches décrites plus bas. L'application ne dépose aucun cookie."
+      ]
+    },
+    {
+      "id": "sync",
+      "title": "If you turn on sync",
+      "titleFr": "Si vous activez la synchronisation",
+      "paragraphs": [
+        "To find the same library on several devices, you sign in with your e-mail address: a one-time code is sent to it, with no password. Your library is then copied to [Supabase](supabase), which provides the database, the sign-in and the image storage, in its West EU region, in Ireland.",
+        "What is sent: your e-mail address; for each book, the title, the author, the ISBN, the column it sits in and its place there, whether you are reading it, your notes, the shop link if you entered one, the cover address, and the dates it was added, changed and deleted; and the cover photos you take. Your session is kept in your browser's local storage.",
+        "Legal basis: providing the sync you asked for by signing in."
+      ],
+      "paragraphsFr": [
+        "Pour retrouver la même bibliothèque sur plusieurs appareils, vous vous connectez avec votre adresse e-mail : un code à usage unique vous y est envoyé, sans mot de passe. Votre bibliothèque est alors copiée chez [Supabase](supabase), qui fournit la base de données, la connexion et le stockage des images, dans sa région Europe de l'Ouest, en Irlande.",
+        "Ce qui est envoyé : votre adresse e-mail ; pour chaque livre, le titre, l'auteur, l'ISBN, la colonne où il se trouve et sa place dans cette colonne, s'il est en cours de lecture, vos notes, le lien vers une boutique si vous en avez saisi un, l'adresse de la couverture, et ses dates d'ajout, de modification et de suppression ; et les photos de couverture que vous prenez. Votre session est gardée dans le stockage local de votre navigateur.",
+        "Base légale : la fourniture de la synchronisation que vous demandez en vous connectant."
+      ]
+    },
+    {
+      "id": "deleted-books",
+      "title": "Deleted books",
+      "titleFr": "Livres supprimés",
+      "paragraphs": [
+        "When you delete a book while sync is on, it is marked as deleted rather than erased, so that your other devices delete it too. Thirty days later, everything you wrote about it (title, author, notes, cover) is erased from Supabase and its cover photo is deleted; only an empty marker remains, so that a device that was offline longer still learns the book is gone."
+      ],
+      "paragraphsFr": [
+        "Quand vous supprimez un livre alors que la synchronisation est active, il est marqué comme supprimé plutôt qu'effacé, pour que vos autres appareils le suppriment aussi. Trente jours plus tard, tout ce que vous en aviez écrit (titre, auteur, notes, couverture) est effacé chez Supabase et sa photo de couverture est supprimée ; il ne reste qu'un marqueur vide, pour qu'un appareil resté hors ligne plus longtemps apprenne quand même que le livre a disparu."
+      ]
+    },
+    {
+      "id": "covers",
+      "title": "Cover photos",
+      "titleFr": "Photos de couverture",
+      "paragraphs": [
+        "A cover photo is cropped and reduced to 400 pixels at most before it is sent, and stored in a folder named after your account. Anyone who has its exact address can open it without signing in; that address contains two long random identifiers, and it is listed nowhere, not even on a public shelf."
+      ],
+      "paragraphsFr": [
+        "Une photo de couverture est recadrée et réduite à 400 pixels au plus avant l'envoi, puis rangée dans un dossier au nom de votre compte. Quiconque possède son adresse exacte peut l'ouvrir sans se connecter ; cette adresse contient deux longs identifiants aléatoires et n'est listée nulle part, pas même sur une étagère publique."
+      ]
+    },
+    {
+      "id": "catalogue",
+      "title": "The shared catalogue",
+      "titleFr": "Le catalogue commun",
+      "paragraphs": [
+        "Contributing to the shared catalogue is on by default. When a book you added by hand (without an Open Library record) is synced, its title, author and ISBN are copied into a shared catalogue that helps other readers find it. The copy carries no link to your account, so it stays in place if you delete your account.",
+        "To stop it: Settings → « Contribute to community catalog ». Books already copied stay in the catalogue."
+      ],
+      "paragraphsFr": [
+        "La contribution au catalogue commun est activée par défaut. Quand un livre que vous avez ajouté à la main (sans fiche Open Library) est synchronisé, son titre, son auteur et son ISBN sont copiés dans un catalogue partagé qui aide les autres lecteurs à le trouver. Cette copie ne porte aucun lien avec votre compte ; elle reste donc en place si vous supprimez votre compte.",
+        "Pour l'arrêter : Paramètres → « Contribuer au catalogue communautaire ». Les livres déjà copiés restent dans le catalogue."
+      ]
+    },
+    {
+      "id": "public-shelf",
+      "title": "Your shelf is never public",
+      "titleFr": "Votre étagère n'est jamais publique",
+      "paragraphs": [
+        "The publisher shows a public shelf on his own site, but it can only show his own books: no setting in the app and no request lets another account appear on it."
+      ],
+      "paragraphsFr": [
+        "L'éditeur montre une étagère publique sur son propre site, mais elle ne peut montrer que ses livres à lui : aucun réglage de l'application ni aucune requête ne permet à un autre compte d'y apparaître."
+      ]
+    },
+    {
+      "id": "lookups",
+      "title": "Searches",
+      "titleFr": "Recherches",
+      "paragraphs": [
+        "When you scan an ISBN or search for a title, the search goes straight from your browser to [Open Library](openlibrary) and, if needed, to the [BnF catalogue](bnf); the covers found are loaded from Open Library. When you type a title by hand, it is also looked up in the shared catalogue at Supabase, with or without an account. Each of these services receives the search and your IP address, as any site you visit does."
+      ],
+      "paragraphsFr": [
+        "Quand vous scannez un ISBN ou cherchez un titre, la recherche part directement de votre navigateur vers [Open Library](openlibrary) et, si besoin, vers le [catalogue de la BnF](bnf) ; les couvertures trouvées sont chargées depuis Open Library. Quand vous saisissez un titre à la main, il est aussi cherché dans le catalogue commun chez Supabase, avec ou sans compte. Chacun de ces services reçoit la recherche et votre adresse IP, comme tout site que vous visitez."
+      ]
+    },
+    {
+      "id": "captcha",
+      "status": "pending — publish only once Task 11's Turnstile captcha is live",
+      "title": "Bot check at sign-in",
+      "titleFr": "Vérification anti-robot à la connexion",
+      "paragraphs": [
+        "Before a sign-in code is sent, [Cloudflare Turnstile](turnstile) checks that the request does not come from a bot. It sends Cloudflare a token, the site's key and your IP address; that exchange is between your browser and Cloudflare, under Cloudflare's own privacy policy."
+      ],
+      "paragraphsFr": [
+        "Avant l'envoi d'un code de connexion, [Cloudflare Turnstile](turnstile) vérifie que la demande ne vient pas d'un robot. Il transmet à Cloudflare un jeton, la clé du site et votre adresse IP ; cet échange a lieu entre votre navigateur et Cloudflare, selon la politique de confidentialité de Cloudflare."
+      ]
+    },
+    {
+      "id": "export-and-delete",
+      "title": "Export and deletion",
+      "titleFr": "Export et suppression",
+      "paragraphs": [
+        "Settings → Backup → « Export my library »: download your whole library as a JSON file, at any time, with or without an account.",
+        "Settings → Account → « Delete account & data »: erases your books, your sync record, your profile, your cover photos and your account at Supabase. Your books stay on this device. If a photo cannot be removed at once, it is removed by a daily cleanup, and the app tells you so; if even that cannot be scheduled, the app asks you to write in. Synced data is kept for as long as your account exists."
+      ],
+      "paragraphsFr": [
+        "Paramètres → Sauvegarde → « Exporter ma bibliothèque » : téléchargez toute votre bibliothèque en fichier JSON, à tout moment, avec ou sans compte.",
+        "Paramètres → Compte → « Supprimer le compte et les données » : efface vos livres, votre suivi de synchronisation, votre profil, vos photos de couverture et votre compte chez Supabase. Vos livres restent sur cet appareil. Si une photo ne peut pas être retirée tout de suite, un nettoyage quotidien s'en charge, et l'application vous le dit ; si même ce nettoyage ne peut pas être programmé, elle vous invite à écrire. Les données synchronisées sont conservées tant que votre compte existe."
+      ]
+    }
+  ]
+}
