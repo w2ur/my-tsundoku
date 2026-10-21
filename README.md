@@ -45,6 +45,8 @@ A first visit (no books, no stored entry) opens on the landing page: the promise
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase publishable (anon) key |
+| `CRON_SECRET` | Bearer secret Vercel Cron sends to `/api/keepalive` and `/api/purge-covers`. Without it keepalive still pings (flagged unauthenticated) and purge-covers refuses to run |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only, Vercel Production only: `/api/purge-covers` deletes queued cover files through the Storage API |
 
 ### Build
 
@@ -87,6 +89,8 @@ Have a suggestion? [Get in touch](mailto:contact@my-tsundoku.app).
 ## Deployment
 
 Auto-deployed on **Vercel** on push to `main`.
+
+Retention: a book deleted more than 30 days ago is stripped of its content nightly (pg_cron, migration `007_purge_soft_deleted.sql`, which must be applied in the Supabase SQL editor before the code that reads `purged_at` is deployed); its cover files are deleted by the daily `/api/purge-covers` Vercel cron.
 
 - **URL**: https://www.my-tsundoku.app
 
