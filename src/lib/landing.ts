@@ -51,7 +51,7 @@ const FR: LandingContent = {
   },
   privacy: {
     title: "Vos données restent chez vous",
-    body: "Tout est stocké sur votre appareil et fonctionne hors ligne. L’application s’installe sur votre téléphone comme une app native, et la synchronisation entre appareils reste optionnelle. My Tsundoku est un logiciel libre (AGPL), sans publicité, avec une mesure d’audience anonyme.",
+    body: "Tout est stocké sur votre appareil, sauf si vous activez la synchronisation, et fonctionne hors ligne. L’application s’installe sur votre téléphone comme une app native, et la synchronisation entre appareils reste optionnelle. My Tsundoku est un logiciel libre (AGPL), sans publicité, avec une mesure d’audience anonyme.",
     codeLinkLabel: "Voir le code source",
     noticeLinkLabel: "Lire la politique de confidentialité",
   },
@@ -103,7 +103,7 @@ const EN: LandingContent = {
   },
   privacy: {
     title: "Your data stays with you",
-    body: "Everything is stored on your device and works offline. Install it on your phone like a native app; syncing across devices stays optional. My Tsundoku is free software (AGPL), with no ads and only anonymous audience measurement.",
+    body: "Everything is stored on your device, unless you turn on sync, and works offline. Install it on your phone like a native app; syncing across devices stays optional. My Tsundoku is free software (AGPL), with no ads and only anonymous audience measurement.",
     codeLinkLabel: "See the source code",
     noticeLinkLabel: "Read the privacy notice",
   },

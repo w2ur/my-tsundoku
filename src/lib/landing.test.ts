@@ -67,6 +67,11 @@ describe("LANDING content", () => {
     }
   });
 
+  it("does not claim data stays on the device when sync is on", () => {
+    expect(LANDING.fr.privacy.body).toContain("sur votre appareil, sauf si vous activez la synchronisation");
+    expect(LANDING.en.privacy.body).toContain("on your device, unless you turn on sync");
+  });
+
   it("keeps meta descriptions within Google's display range", () => {
     for (const locale of LOCALES) {
       expect(LANDING[locale].metaDescription.length).toBeLessThanOrEqual(160);

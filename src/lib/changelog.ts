@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.1",
+    date: "2026-10-21",
+    changes: {
+      fr: [
+        "La page d'accueil précise que vos livres quittent l'appareil quand la synchronisation est activée",
+      ],
+      en: [
+        "The home page now says your books leave the device when sync is on",
+      ],
+    },
+  },
+  {
     version: "2.9.0",
     date: "2026-10-21",
     changes: {
