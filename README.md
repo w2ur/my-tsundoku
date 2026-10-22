@@ -48,6 +48,8 @@ A first visit (no books, no stored entry) opens on the landing page: the promise
 | `CRON_SECRET` | Bearer secret Vercel Cron sends to `/api/keepalive` and `/api/purge-covers`. Without it keepalive still pings (flagged unauthenticated) and purge-covers refuses to run |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only, Vercel Production only: `/api/purge-covers` deletes queued cover files through the Storage API |
 
+Apply `supabase/migrations/*.sql` in numeric order in the Supabase SQL editor, reading each file's BEFORE APPLYING header first (008 has pre-checks).
+
 ### Build
 
 ```bash

@@ -32,6 +32,7 @@
     "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.4.6",
     "@serwist/cli": "^9.5.13",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
