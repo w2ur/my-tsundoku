@@ -43,7 +43,9 @@
 -- folder succeeds, an upsert into the first account's folder is refused.
 --
 -- The limits are generous on purpose (the longest real title in the catalogue is
--- well under 200 characters).
+-- well under 200 characters). The client mirrors them (BOOK_LIMITS in
+-- src/lib/book-validation.ts), so an over-limit book is refused locally with a
+-- clear reason before it can reach the server, on sync and on backup import.
 
 -- 1. Length limits -----------------------------------------------------------
 ALTER TABLE public.books

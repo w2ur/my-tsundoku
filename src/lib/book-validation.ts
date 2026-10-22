@@ -20,6 +20,16 @@ export type BookValidation =
   | { ok: true; book: Book }
   | { ok: false; reason: string };
 
+/**
+ * Mirrors the length CHECKs of supabase/migrations/008_hardening.sql. Counted in
+ * code points, as Postgres char_length does, so an emoji is one character.
+ */
+export const BOOK_LIMITS = { title: 500, author: 300, isbn: 20 } as const;
+
+function exceeds(value: string, max: number): boolean {
+  return Array.from(value).length > max;
+}
+
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
@@ -58,6 +68,12 @@ export function validateBookRecord(raw: unknown): BookValidation {
   if (!isNonEmptyString(r.id)) return { ok: false, reason: "missing id" };
   if (!isRequiredText(r.title)) return { ok: false, reason: "missing title" };
   if (!isRequiredText(r.author)) return { ok: false, reason: "missing author" };
+  if (exceeds(r.title, BOOK_LIMITS.title)) {
+    return { ok: false, reason: `title longer than ${BOOK_LIMITS.title} characters` };
+  }
+  if (exceeds(r.author, BOOK_LIMITS.author)) {
+    return { ok: false, reason: `author longer than ${BOOK_LIMITS.author} characters` };
+  }
   if (!isNonEmptyString(r.stage) || !STAGES.includes(r.stage as Stage)) {
     return { ok: false, reason: `invalid stage "${String(r.stage)}"` };
   }
@@ -86,6 +102,9 @@ export function validateBookRecord(raw: unknown): BookValidation {
   const storeUrl = optionalString(r.storeUrl);
   if (storeUrl) book.storeUrl = storeUrl;
   const isbn = optionalString(r.isbn);
+  if (isbn && exceeds(isbn, BOOK_LIMITS.isbn)) {
+    return { ok: false, reason: `isbn longer than ${BOOK_LIMITS.isbn} characters` };
+  }
   if (isbn) book.isbn = isbn;
   const olWorkId = optionalString(r.olWorkId);
   if (olWorkId) book.olWorkId = olWorkId;
@@ -99,6 +118,14 @@ export function validateBookRecord(raw: unknown): BookValidation {
 export interface RejectedRecord {
   label: string;
   reason: string;
+}
+
+const LABEL_MAX = 60;
+
+/** Keeps a rejection label readable when the rejected title is the over-long one. */
+function shorten(text: string): string {
+  const chars = Array.from(text);
+  return chars.length > LABEL_MAX ? `${chars.slice(0, LABEL_MAX).join("")}…` : text;
 }
 
 /** Splits a batch into books the cloud will accept and a reportable rejection list. */
@@ -117,7 +144,7 @@ export function validateBookRecords(records: unknown[]): {
     }
     const title = (record as Record<string, unknown> | null)?.title;
     rejected.push({
-      label: isNonEmptyString(title) ? title : `#${index + 1}`,
+      label: isNonEmptyString(title) ? shorten(title) : `#${index + 1}`,
       reason: result.reason,
     });
   });

@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { resolveCoverUrl } from "@/lib/covers";
 import { getAllBooks } from "@/lib/books";
 import { findDuplicate } from "@/lib/duplicates";
+import { BOOK_LIMITS } from "@/lib/book-validation";
 import type { Book } from "@/lib/types";
 import GeneratedCover from "@/components/GeneratedCover";
 import CoverCrop from "@/components/CoverCrop";
@@ -158,6 +159,7 @@ export default function BookForm({ initial, onSubmit, submitLabel, excludeBookId
           <input
             type="text"
             value={title}
+            maxLength={BOOK_LIMITS.title}
             onChange={(e) => {
               const val = e.target.value;
               setTitle(val);
@@ -269,6 +271,7 @@ export default function BookForm({ initial, onSubmit, submitLabel, excludeBookId
         <input
           type="text"
           value={author}
+          maxLength={BOOK_LIMITS.author}
           onChange={(e) => setAuthor(e.target.value)}
           placeholder={t("form_authorPlaceholder")}
           className={inputClass}

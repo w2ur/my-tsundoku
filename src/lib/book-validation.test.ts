@@ -39,6 +39,15 @@ describe("validateBookRecord", () => {
     }
   });
 
+  // Regression: 318fd80 — 008 adds length CHECKs; an over-limit book was a permanent 400 on sync with a raw constraint message.
+  it("rejects text over the 008 length limits, counting code points", () => {
+    expect(reasonFor({ title: "x".repeat(501) })).toBe("title longer than 500 characters");
+    expect(reasonFor({ author: "x".repeat(301) })).toBe("author longer than 300 characters");
+    expect(reasonFor({ isbn: "9".repeat(21) })).toBe("isbn longer than 20 characters");
+    expect(validateBookRecord({ ...valid, title: "x".repeat(500), author: "y".repeat(300), isbn: "9".repeat(20) }).ok).toBe(true);
+    expect(validateBookRecord({ ...valid, title: "😀".repeat(500) }).ok).toBe(true);
+  });
+
   it("rejects a stage outside the CHECK constraint", () => {
     expect(reasonFor({ stage: "to_read" })).toContain("invalid stage");
   });
@@ -104,6 +113,13 @@ describe("validateBookRecords", () => {
       { label: "Dune", reason: 'invalid stage "nope"' },
       { label: "#3", reason: "missing title" },
     ]);
+  });
+
+  it("shortens a long title in the rejection label, keeping the reason whole", () => {
+    const { rejected } = validateBookRecords([{ ...valid, title: "x".repeat(600) }]);
+    expect(Array.from(rejected[0].label)).toHaveLength(61);
+    expect(rejected[0].label.endsWith("…")).toBe(true);
+    expect(rejected[0].reason).toBe("title longer than 500 characters");
   });
 
   it("returns everything when the batch is clean", () => {
