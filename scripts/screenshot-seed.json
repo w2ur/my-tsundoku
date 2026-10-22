@@ -1,6 +1,18 @@
 {
   "version": 1,
   "exportedAt": "2026-01-01T00:00:00.000Z",
+  "screenshots": [
+    {
+      "file": "screenshot-board.png",
+      "alt": "Kanban board in French with the Livres à acheter (wishlist) tab selected next to the Tsundoku, Bibliothèque and S'en séparer tabs, showing three books",
+      "label": "Kanban board — organize your books across four reading stages"
+    },
+    {
+      "file": "screenshot-add.png",
+      "alt": "Add-a-book screen in French (Ajouter un livre), asking which stage the book goes to: Livres à acheter, Tsundoku, Bibliothèque or S'en séparer",
+      "label": "Add a book — first pick the stage it goes to: wishlist, unread pile, library or to sell"
+    }
+  ],
   "books": [
     {
       "id": "seed-01",

@@ -11,7 +11,7 @@
 // a visitor would, so the English frames show the real English interface.
 //
 // Exit codes: 0 written, 2 could not run.
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 import sharp from "sharp";
@@ -19,6 +19,7 @@ import sharp from "sharp";
 const BASE = "http://localhost:9877";
 const SEED = fileURLToPath(new URL("./screenshot-seed.json", import.meta.url));
 const LANDING = fileURLToPath(new URL("../public/landing/", import.meta.url));
+const README = fileURLToPath(new URL("../README.md", import.meta.url));
 const MANIFEST = fileURLToPath(new URL("../public/screenshots/", import.meta.url));
 const STAGES = ["a_acheter", "tsundoku", "bibliotheque", "revendre"];
 // First seeded title of each stage, in tab order: proves the pile is rendered.
@@ -36,6 +37,20 @@ async function webp(buffer, name, suffix) {
   name = `${name}${suffix}`;
   await writeFile(`${LANDING}${name}.webp`, await sharp(buffer).webp({ quality: 80 }).toBuffer());
   console.log(`wrote public/landing/${name}.webp`);
+}
+
+// The seed file owns each manifest screenshot's description; keep the README
+// alt text in step so a recapture never leaves it describing an older frame.
+async function syncReadmeAlts() {
+  const { screenshots } = JSON.parse(await readFile(SEED, "utf8"));
+  let readme = await readFile(README, "utf8");
+  for (const { file, alt } of screenshots) {
+    const image = new RegExp(`!\\[[^\\]]*\\]\\(public/screenshots/${file}\\)`);
+    if (!image.test(readme)) throw new Error(`README.md does not embed ${file}`);
+    readme = readme.replace(image, () => `![${alt}](public/screenshots/${file})`);
+  }
+  await writeFile(README, readme);
+  console.log("synced README.md screenshot alt texts from the seed");
 }
 
 async function ready(page, theme, entry) {
@@ -106,6 +121,7 @@ async function captureLocale(browser, locale) {
         await writeFile(`${MANIFEST}screenshot-board.png`, board390);
         await writeFile(`${MANIFEST}screenshot-add.png`, add);
         console.log("wrote public/screenshots/screenshot-{board,add}.png");
+        await syncReadmeAlts();
       }
     }
   } finally {

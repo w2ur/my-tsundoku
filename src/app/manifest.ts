@@ -1,4 +1,8 @@
 import type { MetadataRoute } from "next";
+import seed from "../../scripts/screenshot-seed.json";
+
+// The seed file owns the screenshot descriptions, so a recapture keeps them.
+const label = (file: string) => seed.screenshots.find((s) => s.file === file)!.label;
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
@@ -59,14 +63,14 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "390x844",
         type: "image/png",
         form_factor: "narrow",
-        label: "Kanban board — organize your books across four reading stages",
+        label: label("screenshot-board.png"),
       },
       {
         src: "/screenshots/screenshot-add.png",
         sizes: "390x844",
         type: "image/png",
         form_factor: "narrow",
-        label: "Add a book — search Open Library or scan a barcode",
+        label: label("screenshot-add.png"),
       },
     ],
     shortcuts: [
