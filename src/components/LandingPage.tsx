@@ -10,9 +10,13 @@ interface LandingPageProps {
 }
 
 const IMG = "/landing";
+// French assets keep their original names; English ones carry an -en suffix
+// (scripts/capture-screenshots.mjs writes both).
+const ASSET_SUFFIX = { fr: "", en: "-en" } as const;
 
 export default function LandingPage({ locale }: LandingPageProps) {
   const content = LANDING[locale];
+  const suffix = ASSET_SUFFIX[locale];
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -54,12 +58,12 @@ export default function LandingPage({ locale }: LandingPageProps) {
               >
                 <source
                   media="(min-width: 768px)"
-                  srcSet={`${IMG}/board-1440-${theme}.webp`}
+                  srcSet={`${IMG}/board-1440-${theme}${suffix}.webp`}
                   width={1440}
                   height={900}
                 />
                 <img
-                  src={`${IMG}/pile-a_acheter-${theme}.webp`}
+                  src={`${IMG}/pile-a_acheter-${theme}${suffix}.webp`}
                   width={390}
                   height={844}
                   alt={content.screenshotAlt}
@@ -83,7 +87,7 @@ export default function LandingPage({ locale }: LandingPageProps) {
                         className={theme === "light" ? "theme-light-only block" : "theme-dark-only"}
                       >
                         <img
-                          src={`${IMG}/pile-${pile.stage}-${theme}.webp`}
+                          src={`${IMG}/pile-${pile.stage}-${theme}${suffix}.webp`}
                           width={390}
                           height={844}
                           alt={`${pile.name} — ${pile.caption}`}

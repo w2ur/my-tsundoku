@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.2",
+    date: "2026-10-22",
+    changes: {
+      fr: ["La page d'accueil anglaise montre désormais l'application en anglais"],
+      en: ["The English home page now shows the app in English"],
+    },
+  },
+  {
     version: "2.9.1",
     date: "2026-10-21",
     changes: {

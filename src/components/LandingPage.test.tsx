@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { existsSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 
 vi.mock("@/lib/entry", () => ({ enterApp: vi.fn(async () => undefined) }));
@@ -22,6 +23,8 @@ function page(locale: "fr" | "en"): { html: string; doc: Document } {
 
 describe.each(["fr", "en"] as const)("LandingPage (%s)", (locale) => {
   const content = LANDING[locale];
+  // French assets keep their historical names; English ones are -en.
+  const suffix = locale === "en" ? "-en" : "";
 
   it("has one h1 and one filled CTA to /add, with the reassurance line", () => {
     const { doc } = page(locale);
@@ -39,15 +42,24 @@ describe.each(["fr", "en"] as const)("LandingPage (%s)", (locale) => {
     const figure = doc.querySelector("main > figure")!;
     const light = figure.querySelector("picture.theme-light-only")!;
     expect(light.querySelector("source")!.getAttribute("media")).toBe("(min-width: 768px)");
-    expect(light.querySelector("source")!.getAttribute("srcset")).toBe("/landing/board-1440-light.webp");
+    expect(light.querySelector("source")!.getAttribute("srcset")).toBe(`/landing/board-1440-light${suffix}.webp`);
     const lightImg = light.querySelector("img")!;
-    expect(lightImg.getAttribute("src")).toBe("/landing/pile-a_acheter-light.webp");
+    expect(lightImg.getAttribute("src")).toBe(`/landing/pile-a_acheter-light${suffix}.webp`);
     expect(lightImg.getAttribute("loading")).toBeNull();
     expect(lightImg.getAttribute("alt")).toBe(content.screenshotAlt);
     const dark = figure.querySelector("picture.theme-dark-only")!;
-    expect(dark.querySelector("source")!.getAttribute("srcset")).toBe("/landing/board-1440-dark.webp");
-    expect(dark.querySelector("img")!.getAttribute("src")).toBe("/landing/pile-a_acheter-dark.webp");
+    expect(dark.querySelector("source")!.getAttribute("srcset")).toBe(`/landing/board-1440-dark${suffix}.webp`);
+    expect(dark.querySelector("img")!.getAttribute("src")).toBe(`/landing/pile-a_acheter-dark${suffix}.webp`);
     expect(dark.querySelector("img")!.getAttribute("loading")).toBe("lazy");
+  });
+
+  it("only references landing assets that exist on disk", () => {
+    const { doc } = page(locale);
+    const srcs = [...doc.querySelectorAll("figure img, figure source")].map(
+      (el) => el.getAttribute("src") ?? el.getAttribute("srcset")!,
+    );
+    expect(srcs.length).toBeGreaterThan(0);
+    for (const src of srcs) expect(existsSync(`public${src}`), src).toBe(true);
   });
 
   it("lists the four piles in STAGES order, amber only on the money piles", () => {
@@ -56,7 +68,7 @@ describe.each(["fr", "en"] as const)("LandingPage (%s)", (locale) => {
     expect(items).toHaveLength(4);
     STAGES.forEach((stage, i) => {
       expect(items[i].querySelector("h3")!.textContent).toBe(content.piles[i].name);
-      expect(items[i].querySelector("img")!.getAttribute("src")).toContain(`pile-${stage}-light`);
+      expect(items[i].querySelector("img")!.getAttribute("src")).toContain(`pile-${stage}-light${suffix}.webp`);
       const amber = items[i].querySelector("svg")!.getAttribute("class")!.includes("amber");
       expect(amber).toBe(stage === "a_acheter" || stage === "revendre");
     });
