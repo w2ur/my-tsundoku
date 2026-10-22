@@ -85,6 +85,7 @@ export default function RootLayout({
           defer
           src="https://s.revah.paris/u.js"
           data-website-id="006ac5d2-2340-42b1-9cbc-b63d353943fa"
+          data-domains="www.my-tsundoku.app"
           strategy="afterInteractive"
         />
       </body>
