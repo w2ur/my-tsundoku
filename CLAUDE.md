@@ -62,6 +62,7 @@ AGPL-3.0-only. Commercial licensing available — contact w@revah.paris.
 
 - `sw.ts` is excluded from `tsconfig.json` (uses webworker types, compiled separately by Serwist CLI)
 - Serwist must use configurator mode, not `withSerwistInit` wrapper (Next.js 16/Turbopack compat)
+- `package.json` `overrides` lifts `zod@^4.0.0` to `^4.6.7` (GHSA-mrhx-c7xc-m3w5, fixed in 4.6.6). Every `@serwist/*` 9.5.x package pins `zod` to an exact vulnerable version, and no Serwist release (stable or the 10.0.0 previews) ships a patched pin, so `npm audit --omit=dev --audit-level=high` fails without the override. Remove it only once `npm view @serwist/next@<installed version> dependencies.zod` is 4.6.6 or later (`npm ls zod` cannot tell you: the override masks the pin)
 - Dexie SSR guard: `typeof window !== 'undefined'`
 - Supabase SSR guard: `supabase` client is `null` on server (same pattern as Dexie)
 - Sync is local-first: Dexie remains source of truth, Supabase is backup/sync layer
