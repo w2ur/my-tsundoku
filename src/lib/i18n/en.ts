@@ -123,6 +123,7 @@ const en: Record<TranslationKeys, string> = {
   settings_about: "About",
   settings_aboutDesc:
     "My Tsundoku (積ん読) — the art of acquiring books and letting them pile up. An app to organize your personal book collection.",
+  settings_viewWelcome: "View the welcome page",
   settings_mailtoSubject: "Suggestion",
   preferences_title: "Preferences",
   preferences_language: "Language",

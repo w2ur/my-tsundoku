@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import StageIcon from "@/components/StageIcon";
@@ -649,6 +650,12 @@ export default function SettingsPage() {
             {t("settings_aboutDesc")}
           </p>
           <div className="flex items-center gap-3 mt-3">
+            <Link
+              href={locale === "en" ? "/en" : "/accueil"}
+              className="text-xs text-subtle underline underline-offset-4 hover:text-muted transition-colors"
+            >
+              {t("settings_viewWelcome")}
+            </Link>
             <a
               href={CODE_URL}
               target="_blank"

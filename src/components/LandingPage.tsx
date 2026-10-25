@@ -7,6 +7,8 @@ import { PRIVACY_PATHS } from "@/lib/privacy/routes";
 
 interface LandingPageProps {
   locale: "fr" | "en";
+  /** Rendered on its own route rather than behind EntryGate on `/`. Defaults to true for `/en`. */
+  standalone?: boolean;
 }
 
 const IMG = "/landing";
@@ -14,7 +16,7 @@ const IMG = "/landing";
 // (scripts/capture-screenshots.mjs writes both).
 const ASSET_SUFFIX = { fr: "", en: "-en" } as const;
 
-export default function LandingPage({ locale }: LandingPageProps) {
+export default function LandingPage({ locale, standalone = locale === "en" }: LandingPageProps) {
   const content = LANDING[locale];
   const suffix = ASSET_SUFFIX[locale];
   const jsonLd = {
@@ -37,7 +39,7 @@ export default function LandingPage({ locale }: LandingPageProps) {
       <div className="mx-auto max-w-5xl px-4 md:px-6">
         <header className="flex items-center justify-between border-b border-border-subtle py-3">
           <span className="font-serif text-2xl text-forest">My Tsundoku</span>
-          <EnterAppButton label={content.enterAppLabel} navigateHome={locale === "en"} />
+          <EnterAppButton label={content.enterAppLabel} locale={locale} navigateHome={standalone} />
         </header>
 
         <main>

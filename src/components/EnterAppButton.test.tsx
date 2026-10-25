@@ -20,11 +20,11 @@ function Locale() {
   return <output data-testid="locale">{useTranslation().locale}</output>;
 }
 
-function setup(navigateHome: boolean) {
+function setup(locale: "fr" | "en", navigateHome: boolean) {
   render(
     <PreferencesProvider>
       <Locale />
-      <EnterAppButton label="Open the app" navigateHome={navigateHome} />
+      <EnterAppButton label="Open the app" locale={locale} navigateHome={navigateHome} />
     </PreferencesProvider>,
   );
 }
@@ -33,7 +33,7 @@ describe("EnterAppButton", () => {
   // Regression: final-fix wave item 7 (this commit) — "Open the app" on /en
   // landed in the French app because the locale preference was never set.
   it("sets the locale to en before navigating home from /en", async () => {
-    setup(true);
+    setup("en", true);
     await userEvent.click(screen.getByRole("button", { name: "Open the app" }));
     await waitFor(() => expect(push).toHaveBeenCalledWith("/"));
     expect((await db.settings.get("locale"))?.value).toBe("en");
@@ -41,10 +41,18 @@ describe("EnterAppButton", () => {
   });
 
   it("leaves the locale alone on the French landing", async () => {
-    setup(false);
+    setup("fr", false);
     await userEvent.click(screen.getByRole("button", { name: "Open the app" }));
     await waitFor(async () => expect((await db.settings.get("enteredApp"))?.value).toBe(true));
     expect(await db.settings.get("locale")).toBeUndefined();
     expect(push).not.toHaveBeenCalled();
+  });
+
+  it("navigates home from /accueil without switching to English", async () => {
+    setup("fr", true);
+    await userEvent.click(screen.getByRole("button", { name: "Open the app" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/"));
+    expect((await db.settings.get("enteredApp"))?.value).toBe(true);
+    expect(await db.settings.get("locale")).toBeUndefined();
   });
 });

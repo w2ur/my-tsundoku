@@ -6,18 +6,19 @@ import { useTranslation } from "@/lib/preferences";
 
 interface EnterAppButtonProps {
   label: string;
-  /** On `/en` the app lives at `/`, so entering also navigates there. */
+  locale: "fr" | "en";
+  /** On a landing-only route (`/en`, `/accueil`) the app lives at `/`, so entering also navigates there. */
   navigateHome?: boolean;
 }
 
 /** Quiet text-style entry to the board: the only filled button on the landing is the hero CTA. */
-export default function EnterAppButton({ label, navigateHome = false }: EnterAppButtonProps) {
+export default function EnterAppButton({ label, locale, navigateHome = false }: EnterAppButtonProps) {
   const router = useRouter();
   const { setLocale } = useTranslation();
 
   async function handleClick() {
     // /en is English-only: carry that choice into the app, which defaults to French.
-    if (navigateHome) setLocale("en");
+    if (locale === "en") setLocale("en");
     await enterApp();
     if (navigateHome) router.push("/");
   }

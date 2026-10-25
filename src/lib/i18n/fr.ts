@@ -122,6 +122,7 @@ const fr = {
   settings_about: "À propos",
   settings_aboutDesc:
     "My Tsundoku (積ん読) — l'art d'acquérir des livres et de les laisser s'empiler. Une application pour organiser votre collection personnelle de livres.",
+  settings_viewWelcome: "Revoir la page d'accueil",
   settings_mailtoSubject: "Suggestion",
   preferences_title: "Préférences",
   preferences_language: "Langue",

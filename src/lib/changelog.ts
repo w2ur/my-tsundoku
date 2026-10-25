@@ -8,6 +8,14 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.10.0",
+    date: "2026-10-25",
+    changes: {
+      fr: ["Un lien dans Paramètres › À propos permet de revoir la page d'accueil"],
+      en: ["A link in Settings › About shows the welcome page again"],
+    },
+  },
+  {
     version: "2.9.2",
     date: "2026-10-22",
     changes: {
