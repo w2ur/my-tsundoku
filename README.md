@@ -1,33 +1,56 @@
----
+<!-- portfolio
 name: "My Tsundoku"
 tagline_fr: "Votre tsundoku, de l’envie à la bibliothèque"
 tagline_en: "Your tsundoku, from wishlist to library"
 about_en: "A bilingual (FR/EN) offline-first PWA for organizing personal book collections on a Kanban board."
 facts_fr: "Next.js 16, local-first sur IndexedDB, synchro Supabase, PWA hors ligne."
 facts_en: "Next.js 16, local-first on IndexedDB, Supabase sync, offline PWA."
----
+-->
 
-# Tsundoku
+**English** · [Français](README.fr.md)
 
-Tsundoku (積ん読) is a PWA for organizing personal book collections. Inspired by the Japanese concept of letting unread books pile up, it provides a Kanban-style board to track books across four stages: wishlist, unread pile, library, and to sell. Available in French and English, with light and dark mode. Works offline with local-first storage — optionally sign in to sync across devices and contribute to the community book catalog.
+# My Tsundoku
 
-![Add-a-book screen in French (Ajouter un livre), asking which stage the book goes to: Livres à acheter, Tsundoku, Bibliothèque or S'en séparer](public/screenshots/screenshot-add.png)
-![Kanban board in French with the Livres à acheter (wishlist) tab selected next to the Tsundoku, Bibliothèque and S'en séparer tabs, showing three books](public/screenshots/screenshot-board.png)
+The stack of books you haven’t read yet, tracked as a reserve of surprises.
 
-## Tech Stack
+**Status:** maintained · public · free to use at **[www.my-tsundoku.app](https://www.my-tsundoku.app/en)**
 
-- **Next.js 16** (App Router, Turbopack) + **React 19** + **TypeScript**
-- **Tailwind CSS v4** for styling
-- **Dexie.js** for IndexedDB (local-first storage)
-- **Supabase** for auth (email OTP code), cloud sync, storage, and community catalog
-- **Serwist** for PWA / service worker (configurator mode)
-- **@dnd-kit/core + @dnd-kit/sortable** for drag-and-drop
-- **motion** for animations
-- **@zxing/browser** for barcode scanning
-- **react-image-crop** for cover photo cropping
-- **Vitest** for testing
+[![CI](https://github.com/w2ur/my-tsundoku/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/w2ur/my-tsundoku/actions/workflows/ci.yml)
+[![Website](https://img.shields.io/website?url=https%3A%2F%2Fwww.my-tsundoku.app&label=my-tsundoku.app)](https://www.my-tsundoku.app/en)
+[![License: AGPL-3.0](https://img.shields.io/github/license/w2ur/my-tsundoku)](LICENSE)
 
-## Running Locally
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/board-dark.png">
+  <img src="docs/media/board-light.png" alt="The My Tsundoku board in English, four columns side by side: Wishlist, Tsundoku, Library and To sell, each holding book cards with a generated cover, a title and an author">
+</picture>
+
+## Why
+
+When I started reading regularly again, I tried Babelio, but it didn’t stick, probably because the application doesn’t match the way books live in my home. So I built this one, which follows that flow: books to buy pile up, then they pile up in the Tsundoku, then in the library, and some that do not, or no longer, deserve their place there are let go. And I thought that perhaps other lovers of literature might get something out of it.
+
+The whole story, from the Japanese word to a book on night in the Middle Ages: [My Tsundoku, on william.revah.paris](https://william.revah.paris/en/stories/tsundoku/).
+
+## What it does
+
+- Four piles on a Kanban board: wishlist, Tsundoku (the unread pile), library, and to sell; drag a book from one to the next.
+- Add a book by scanning its barcode, searching its title, or typing it in by hand. An ISBN is looked up in Open Library first, then in the BnF catalogue, which covers the French publishing Open Library lacks.
+- Installs as an app and works offline. French and English, light and dark mode.
+- Export your whole library as a JSON file, with or without an account.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/piles-dark.gif">
+  <img src="docs/media/piles-light.gif" width="300" alt="On a phone, the board's tab bar switches from Wishlist to Tsundoku, Library and To sell, showing the books in each pile, then back to Wishlist">
+</picture>
+
+## Where your data lives
+
+Without an account, your books, notes and settings stay in your browser’s own database on your device; nothing from your library leaves it, apart from searches. Scanning an ISBN or searching a title goes straight from your browser to Open Library and, for an ISBN it does not know, to the BnF; a title typed by hand is also looked up in the shared catalogue.
+
+Signing in (a one-time code sent to your e-mail, no password) copies your library to Supabase, in its West EU region, so the same library follows you across devices. When a synced book has no Open Library record, its title, author and ISBN are copied, with no link to your account, into a shared catalogue that helps other readers find it; this is on by default and can be turned off in Settings.
+
+The full notice: [Privacy](https://www.my-tsundoku.app/en/privacy).
+
+## Run locally
 
 ```bash
 cp .env.example .env.local   # fill in your Supabase credentials
@@ -35,49 +58,11 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:9876](http://localhost:9876).
+Open [http://localhost:9876](http://localhost:9876). A first visit opens on the landing page; adding a first book, or entering the app, switches the device to the board. Then `npm test` runs the tests and `npm run build` builds the app and its service worker.
 
-A first visit (no books, no stored entry) opens on the landing page: the promise, a real board screenshot, the four piles, and a quiet "open the app" button. Adding a first book, or entering the app, switches the device to the board for good; the landing stays at `/en` for English readers, with screenshots of the English interface (`npm run screenshots -- fr|en` regenerates them).
+## Deploy
 
-### Environment Variables
-
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase publishable (anon) key |
-| `CRON_SECRET` | Bearer secret Vercel Cron sends to `/api/keepalive` and `/api/purge-covers`. Without it keepalive still pings (flagged unauthenticated) and purge-covers refuses to run |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only, Vercel Production only: `/api/purge-covers` deletes queued cover files through the Storage API |
-
-Apply `supabase/migrations/*.sql` in numeric order in the Supabase SQL editor, reading each file's BEFORE APPLYING header first (008 has pre-checks).
-
-### Build
-
-```bash
-npm run build    # next build && serwist build
-```
-
-### Tests
-
-```bash
-npm test           # single run
-npm run test:watch # watch mode
-```
-
-## Project Structure
-
-```
-src/
-├── app/           # Next.js App Router pages
-│   ├── page.tsx           # Home — Kanban board
-│   ├── add/               # Add book (manual entry, barcode scan)
-│   ├── book/[id]/         # Book detail & edit
-│   ├── settings/          # Settings & backup
-│   ├── confidentialite/   # Privacy notice (FR); /en/privacy is the English one
-│   └── ~offline/          # Offline fallback page
-├── components/    # Reusable UI components
-├── hooks/         # Custom React hooks (useBooks, useBook, useBooksByStage, useIsMobile)
-└── lib/           # Business logic, types, DB, constants
-```
+Auto-deployed on Vercel on push to `main`. Vercel crons, declared in `vercel.json`, keep the Supabase project awake and delete the cover files of purged books; the database migrations are applied by hand in the Supabase SQL editor. Variables, migration order and retention: [docs/operations.md](docs/operations.md).
 
 ## Roadmap
 
@@ -89,13 +74,15 @@ Planned features (in no particular order):
 
 Have a suggestion? [Get in touch](mailto:contact@my-tsundoku.app).
 
-## Deployment
+## Documentation
 
-Auto-deployed on **Vercel** on push to `main`.
+- [Architecture](docs/architecture.md): tech stack, project structure, the landing page and its screenshots
+- [Operations](docs/operations.md): environment variables, migrations, build, deployment, retention
+- [CLAUDE.md](CLAUDE.md): the rules an agent working in this repo must follow
 
-Retention: a book deleted more than 30 days ago is stripped of its content nightly (pg_cron, migration `007_purge_soft_deleted.sql`, which must be applied in the Supabase SQL editor before the code that reads `purged_at` is deployed); its cover files are deleted by the daily `/api/purge-covers` Vercel cron.
+The phone screenshots the web app manifest uses, regenerated by `npm run screenshots`:
 
-- **URL**: https://www.my-tsundoku.app
+![Kanban board in French with the Livres à acheter (wishlist) tab selected next to the Tsundoku, Bibliothèque and S'en séparer tabs, showing three books](public/screenshots/screenshot-board.png) ![Add-a-book screen in French (Ajouter un livre), asking which stage the book goes to: Livres à acheter, Tsundoku, Bibliothèque or S'en séparer](public/screenshots/screenshot-add.png)
 
 ## License
 
@@ -103,6 +90,6 @@ This project is licensed under the [GNU Affero General Public License v3.0](LICE
 
 Commercial licensing available — contact [w@revah.paris](mailto:w@revah.paris).
 
-## Author
+---
 
 Made with care by [William](https://william.revah.paris)
