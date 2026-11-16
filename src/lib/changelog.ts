@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "2.10.1",
+    date: "2026-11-16",
+    changes: {
+      fr: [
+        "Déplacer un livre envoie la colonne au cloud par lots, au lieu d'une requête par livre et par déplacement",
+      ],
+      en: [
+        "Moving a book sends the column to the cloud in batches, instead of one request per book and per move",
+      ],
+    },
+  },
+  {
     version: "2.10.0",
     date: "2026-10-25",
     changes: {

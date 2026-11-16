@@ -3,17 +3,28 @@ import type { Book } from "./types";
 
 // ---- Hoisted mock factories ----
 
-const { mockDb, mockSupabase } = vi.hoisted(() => ({
+const { mockDb, mockSupabase } = vi.hoisted(() => {
+  // bulkDelete forwards to delete, one call per key, so every assertion written
+  // against `delete` still sees — or still fails to see — each removal.
+  const queueDelete = vi.fn().mockResolvedValue(undefined);
+  const failuresDelete = vi.fn().mockResolvedValue(undefined);
+  return {
   mockDb: {
     sync_queue: {
       add: vi.fn().mockResolvedValue(undefined),
       toArray: vi.fn().mockResolvedValue([]),
-      delete: vi.fn().mockResolvedValue(undefined),
+      delete: queueDelete,
+      bulkDelete: vi.fn(async (ids: number[]) => {
+        for (const id of ids) await queueDelete(id);
+      }),
       count: vi.fn().mockResolvedValue(0),
     },
     sync_failures: {
       put: vi.fn().mockResolvedValue(undefined),
-      delete: vi.fn().mockResolvedValue(undefined),
+      delete: failuresDelete,
+      bulkDelete: vi.fn(async (bookIds: string[]) => {
+        for (const bookId of bookIds) await failuresDelete(bookId);
+      }),
       toArray: vi.fn().mockResolvedValue([]),
       count: vi.fn().mockResolvedValue(0),
     },
@@ -30,7 +41,8 @@ const { mockDb, mockSupabase } = vi.hoisted(() => ({
     },
     from: vi.fn(),
   },
-}));
+  };
+});
 
 vi.mock("./db", () => ({ db: mockDb }));
 vi.mock("./supabase", () => ({ supabase: mockSupabase }));
@@ -510,15 +522,18 @@ describe("flushQueue", () => {
       { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
       { id: 2, bookId: "b2", operation: "upsert", payload: { ...testBook, id: "b2" }, createdAt: Date.now() },
     ]);
-    // First call succeeds, second fails with permanent error
+    // Both books travel in one batch. The cloud refuses the batch because of
+    // b2, so each row is sent again alone: b1 goes through, b2 is refused.
     const successChain = mockChain({ error: null });
-    const errorChain = mockChain({
-      error: { message: "constraint violation", code: "23505" },
-      status: 409,
-    });
+    const refusal = () =>
+      mockChain({
+        error: { message: "constraint violation", code: "23505" },
+        status: 409,
+      });
     mockSupabase.from
-      .mockReturnValueOnce(successChain)
-      .mockReturnValueOnce(errorChain)
+      .mockReturnValueOnce(refusal()) // batch [b1, b2]
+      .mockReturnValueOnce(successChain) // b1 alone
+      .mockReturnValueOnce(refusal()) // b2 alone
       .mockReturnValue(mockChain({ error: null })); // sync_metadata
     mockDb.sync_failures.count.mockResolvedValueOnce(1);
 
@@ -540,6 +555,26 @@ describe("flushQueue", () => {
     const result = await flushQueue();
 
     expect(result).toEqual({ flushed: 1, failed: 0 });
+  });
+
+  it("counts a pushed batch as failed, not half-flushed, when the queue cannot be cleared", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockSupabase.auth.getSession.mockResolvedValueOnce(mockSession());
+    mockDb.sync_queue.toArray.mockResolvedValueOnce([
+      { id: 1, bookId: "b1", operation: "upsert", payload: testBook, createdAt: Date.now() },
+      { id: 2, bookId: "b2", operation: "upsert", payload: { ...testBook, id: "b2" }, createdAt: Date.now() },
+    ]);
+    mockSupabase.from.mockReturnValue(mockChain({ error: null }));
+    // IndexedDB refuses the write (quota, aborted transaction): the entries
+    // stay queued and are simply pushed again — an upsert is idempotent.
+    mockDb.sync_queue.bulkDelete.mockRejectedValueOnce(new Error("QuotaExceededError"));
+
+    const result = await flushQueue();
+
+    expect(result).toEqual({ flushed: 0, failed: 2 });
+    expect(mockDb.sync_failures.put).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
   });
 
   it("returns { flushed: 0, failed: 0 } when no session", async () => {

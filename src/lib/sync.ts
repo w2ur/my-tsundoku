@@ -1,5 +1,5 @@
 import { validateBookRecord } from "./book-validation";
-import { db, type SyncFailure } from "./db";
+import { db, type SyncFailure, type SyncQueueEntry } from "./db";
 import { supabase } from "./supabase";
 import type { Book, Stage } from "./types";
 
@@ -144,10 +144,137 @@ export function isPermanentSyncError(status: number | undefined): boolean {
   return status >= 400 && status < 500 && !RETRYABLE_CLIENT_STATUSES.has(status);
 }
 
-let flushing = false;
+/** Every queue entry of one book, reduced to the one worth sending. */
+export interface QueueGroup {
+  bookId: string;
+  /** The newest entry: the only one whose state the cloud should end up with. */
+  latest: SyncQueueEntry;
+  /** Ids of all the book's entries, to clear once `latest` is settled. */
+  ids: number[];
+}
 
-export async function flushQueue(): Promise<{ flushed: number; failed: number }> {
-  if (!supabase || !db || flushing) return { flushed: 0, failed: 0 };
+/**
+ * Collapses the queue to one entry per book, the newest.
+ *
+ * The queue is append-only: moving a book enqueues every book of the column, so
+ * two moves leave two entries per book and only the second still matters. One
+ * entry per book is also what makes a batch upsert legal — Postgres refuses an
+ * `ON CONFLICT DO UPDATE` that touches the same row twice in one statement.
+ *
+ * `entries` must be in queue order (ascending id), which is what Dexie's
+ * `toArray()` returns for the auto-increment primary key.
+ */
+export function coalesceQueue(entries: SyncQueueEntry[]): QueueGroup[] {
+  const groups = new Map<string, QueueGroup>();
+  for (const entry of entries) {
+    const group = groups.get(entry.bookId);
+    if (group) {
+      group.latest = entry;
+      if (entry.id !== undefined) group.ids.push(entry.id);
+    } else {
+      groups.set(entry.bookId, {
+        bookId: entry.bookId,
+        latest: entry,
+        ids: entry.id !== undefined ? [entry.id] : [],
+      });
+    }
+  }
+  return [...groups.values()];
+}
+
+// One upsert request carries at most this many books, and at most this many
+// characters of JSON. The second cap exists because a cover can be a base64
+// `data:` URL stored in the row (resolveCoverUrl's offline fallback): a column
+// of photographed covers would otherwise be one multi-megabyte request. Both
+// values are a conservative choice, not a documented server limit.
+export const UPSERT_BATCH_MAX_ROWS = 200;
+export const UPSERT_BATCH_MAX_CHARS = 1_000_000;
+
+/**
+ * Splits `items` into consecutive batches of at most `maxItems` items and
+ * `maxSize` total size. An item larger than `maxSize` on its own still gets a
+ * batch to itself — it has to be sent somehow.
+ */
+export function chunkBySize<T>(
+  items: T[],
+  maxItems: number,
+  maxSize: number,
+  sizeOf: (item: T) => number,
+): T[][] {
+  const chunks: T[][] = [];
+  let current: T[] = [];
+  let currentSize = 0;
+  for (const item of items) {
+    const size = sizeOf(item);
+    if (current.length > 0 && (current.length >= maxItems || currentSize + size > maxSize)) {
+      chunks.push(current);
+      current = [];
+      currentSize = 0;
+    }
+    current.push(item);
+    currentSize += size;
+  }
+  if (current.length > 0) chunks.push(current);
+  return chunks;
+}
+
+type FlushResult = { flushed: number; failed: number };
+
+// The flush in progress, if any. A call that arrives meanwhile is handed this
+// same promise, so a caller that awaits flushQueue() always waits for a pass
+// that started after its own entries were queued.
+let activeFlush: Promise<FlushResult> | null = null;
+// Set by a flushQueue() call that arrives while a flush is running: the running
+// flush has already read the queue, so whatever that call was for needs a pass
+// of its own. Without it the entry waits for the 5-minute timer, warning shown.
+let flushRequested = false;
+
+/**
+ * Pushes the queue to the cloud. At most one flush runs at a time.
+ *
+ * The lock is taken before the first await. It used to be set only after the
+ * session and the queue had been read, so every call made in that window passed
+ * the guard and pushed the whole queue again: moving a book in a column of N
+ * books enqueues N entries and fired N flushes of N requests each.
+ *
+ * `flushed` and `failed` count books, not queue entries: several entries for
+ * one book are one push. A caller that joins a running flush gets the totals of
+ * that whole run, which may include books queued by someone else.
+ */
+export function flushQueue(): Promise<FlushResult> {
+  if (!supabase || !db) return Promise.resolve({ flushed: 0, failed: 0 });
+  if (activeFlush) {
+    flushRequested = true;
+    return activeFlush;
+  }
+  activeFlush = runFlush();
+  return activeFlush;
+}
+
+async function runFlush(): Promise<FlushResult> {
+  let flushed = 0;
+  let failed = 0;
+
+  try {
+    // Another pass only when a call came in during the last one — never because
+    // entries failed, or a transient error would spin here instead of waiting.
+    do {
+      flushRequested = false;
+      const pass = await flushPass();
+      flushed += pass.flushed;
+      failed += pass.failed;
+    } while (flushRequested);
+  } finally {
+    // Released in the same synchronous step as the loop's last check. Clearing
+    // it from a `.finally()` on the promise would leave a microtask gap in which
+    // a new call could join a flush that will never run another pass.
+    activeFlush = null;
+  }
+  return { flushed, failed };
+}
+
+async function flushPass(): Promise<FlushResult> {
+  if (!supabase || !db) return { flushed: 0, failed: 0 };
 
   const {
     data: { session },
@@ -158,96 +285,152 @@ export async function flushQueue(): Promise<{ flushed: number; failed: number }>
   const entries = await db.sync_queue.toArray();
   if (entries.length === 0) return { flushed: 0, failed: 0 };
 
-  flushing = true;
   setStatus("syncing");
 
+  const client = supabase;
+  const queue = db.sync_queue;
+  const failures = db.sync_failures;
   let flushed = 0;
   let failed = 0;
 
-  try {
-    for (const entry of entries) {
-      try {
-        // A record the cloud cannot accept would either 400 forever or, with an
-        // invalid date, throw inside mapBookToSupabase — and a throw counts as
-        // transient, so it would be retried on every flush for good. Reject it
-        // here instead, where it gets recorded and reported.
-        if (entry.operation === "upsert") {
-          const check = validateBookRecord(entry.payload);
-          if (!check.ok) {
-            console.error("Sync flush rejected entry", entry.id, entry.bookId, check.reason);
-            await db.sync_failures.put({
-              bookId: entry.bookId,
-              title: (entry.payload as Book).title ?? entry.bookId,
-              status: 0,
-              message: check.reason,
-              at: Date.now(),
-            });
-            await db.sync_queue.delete(entry.id!);
-            failed++;
-            continue;
-          }
-        }
+  const bookIdsOf = (groups: QueueGroup[]) => groups.map((group) => group.bookId);
 
-        const now = new Date().toISOString();
-        const res =
-          entry.operation === "upsert"
-            ? await supabase
-                .from("books")
-                .upsert(mapBookToSupabase(entry.payload as Book, userId))
-            : await supabase
-                .from("books")
-                .update({ deleted_at: now, updated_at: now })
-                .eq("id", entry.bookId)
-                .eq("user_id", userId);
+  // One bulk delete per table rather than one delete per entry: a column moved
+  // twice is hundreds of entries, and clearing them one transaction at a time
+  // keeps the queue non-empty — and the warning due at the next launch — for as
+  // long as it takes. If the delete fails the entries stay queued and are pushed
+  // again, which an upsert makes harmless.
+  const settle = async (groups: QueueGroup[]) => {
+    await queue.bulkDelete(groups.flatMap((group) => group.ids));
+    await failures.bulkDelete(bookIdsOf(groups));
+    flushed += groups.length;
+  };
 
-        if (res.error) {
-          const permanent = isPermanentSyncError(res.status);
-          console.error(
-            "Sync flush error for entry",
-            entry.id,
-            entry.bookId,
-            `status ${res.status}`,
-            permanent ? "(permanent)" : "(transient, will retry)",
-            res.error,
-          );
-          if (permanent) {
-            // Retrying cannot help, so the entry goes — but record the refusal,
-            // or the book silently exists on this device only, forever.
-            await db.sync_failures.put({
-              bookId: entry.bookId,
-              title: (entry.payload as Book).title ?? entry.bookId,
-              status: res.status,
-              message: res.error.message ?? "",
-              at: Date.now(),
-            });
-            await db.sync_queue.delete(entry.id!);
-          }
-          failed++;
-          continue;
-        }
-
-        await db.sync_queue.delete(entry.id!);
-        await db.sync_failures.delete(entry.bookId);
-        flushed++;
-      } catch (err) {
-        // A thrown exception carries no status, so it cannot be shown to be
-        // permanent — keep the entry and retry rather than risk losing a book.
-        console.error("Sync flush threw for entry", entry.id, entry.bookId, "(transient, will retry)", err);
-        failed++;
-      }
-    }
-
-    await supabase.from("sync_metadata").upsert({
-      user_id: userId,
-      last_synced_at: new Date().toISOString(),
+  // Retrying cannot help, so the entries go — but record the refusal, or the
+  // book silently exists on this device only, forever.
+  const refuse = async (group: QueueGroup, status: number, message: string) => {
+    await failures.put({
+      bookId: group.bookId,
+      title: (group.latest.payload as Book).title ?? group.bookId,
+      status,
+      message,
+      at: Date.now(),
     });
+    await queue.bulkDelete(group.ids);
+    failed++;
+  };
 
-    // Derive from disk rather than from `failed`: a rejection recorded on an
-    // earlier run must keep the status dirty even if this run pushed cleanly.
-    await refreshSyncStatus();
-  } finally {
-    flushing = false;
+  // A thrown exception carries no status, so it cannot be shown to be
+  // permanent — keep the entries and retry rather than risk losing a book.
+  const keepAfterThrow = (groups: QueueGroup[], err: unknown) => {
+    console.error("Sync flush threw for", bookIdsOf(groups), "(transient, will retry)", err);
+    failed += groups.length;
+  };
+
+  type Response = { error: { message?: string } | null; status: number };
+
+  const outcomeOf = (res: Response, groups: QueueGroup[]): "ok" | "refused" | "retry" => {
+    if (!res.error) return "ok";
+    const permanent = isPermanentSyncError(res.status);
+    console.error(
+      "Sync flush error for",
+      bookIdsOf(groups),
+      `status ${res.status}`,
+      permanent ? "(permanent)" : "(transient, will retry)",
+      res.error,
+    );
+    return permanent ? "refused" : "retry";
+  };
+
+  type PendingUpsert = {
+    group: QueueGroup;
+    row: ReturnType<typeof mapBookToSupabase>;
+    size: number;
+  };
+  const upserts: PendingUpsert[] = [];
+  const deletes: QueueGroup[] = [];
+
+  for (const group of coalesceQueue(entries)) {
+    try {
+      if (group.latest.operation === "delete") {
+        deletes.push(group);
+        continue;
+      }
+      // A record the cloud cannot accept would either 400 forever or, with an
+      // invalid date, throw inside mapBookToSupabase — and a throw counts as
+      // transient, so it would be retried on every flush for good. Reject it
+      // here instead, where it gets recorded and reported.
+      const check = validateBookRecord(group.latest.payload);
+      if (!check.ok) {
+        console.error("Sync flush rejected book", group.bookId, check.reason);
+        await refuse(group, 0, check.reason);
+        continue;
+      }
+      const row = mapBookToSupabase(group.latest.payload as Book, userId);
+      upserts.push({ group, row, size: JSON.stringify(row).length });
+    } catch (err) {
+      keepAfterThrow([group], err);
+    }
   }
+
+  // A batch is one statement: a single row Postgres refuses takes every other
+  // row down with it. So a batch that is refused outright is sent again row by
+  // row, which finds the offender and lets the rest through. A transient
+  // failure is not split: the network would only fail that many more times.
+  const pushUpserts = async (batch: PendingUpsert[]): Promise<void> => {
+    const groups = batch.map((item) => item.group);
+    try {
+      const res: Response = await client.from("books").upsert(batch.map((item) => item.row));
+      const outcome = outcomeOf(res, groups);
+
+      if (outcome === "ok") {
+        await settle(groups);
+      } else if (outcome === "retry") {
+        failed += batch.length;
+      } else if (batch.length > 1) {
+        for (const item of batch) await pushUpserts([item]);
+      } else {
+        await refuse(groups[0], res.status, res.error?.message ?? "");
+      }
+    } catch (err) {
+      keepAfterThrow(groups, err);
+    }
+  };
+
+  const batches = chunkBySize(
+    upserts,
+    UPSERT_BATCH_MAX_ROWS,
+    UPSERT_BATCH_MAX_CHARS,
+    (item) => item.size,
+  );
+  for (const batch of batches) await pushUpserts(batch);
+
+  for (const group of deletes) {
+    try {
+      const now = new Date().toISOString();
+      const res: Response = await client
+        .from("books")
+        .update({ deleted_at: now, updated_at: now })
+        .eq("id", group.bookId)
+        .eq("user_id", userId);
+      const outcome = outcomeOf(res, [group]);
+
+      if (outcome === "ok") await settle([group]);
+      else if (outcome === "retry") failed++;
+      else await refuse(group, res.status, res.error?.message ?? "");
+    } catch (err) {
+      keepAfterThrow([group], err);
+    }
+  }
+
+  await supabase.from("sync_metadata").upsert({
+    user_id: userId,
+    last_synced_at: new Date().toISOString(),
+  });
+
+  // Derive from disk rather than from `failed`: a rejection recorded on an
+  // earlier run must keep the status dirty even if this run pushed cleanly.
+  await refreshSyncStatus();
   return { flushed, failed };
 }
 

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import * as fc from "fast-check";
-import { mapBookToSupabase, mapSupabaseToBook } from "./sync";
+import { chunkBySize, coalesceQueue, mapBookToSupabase, mapSupabaseToBook } from "./sync";
+import type { SyncQueueEntry } from "./db";
 import type { Book, Stage } from "./types";
 
 // mapBookToSupabase and mapSupabaseToBook are pure transforms that do not call
@@ -93,6 +94,95 @@ describe("sync field-mapping property tests (round-trip)", () => {
         const row = mapBookToSupabase(book, userId);
         expect(new Date(row.created_at).getTime()).not.toBeNaN();
         expect(new Date(row.updated_at).getTime()).not.toBeNaN();
+      }),
+      { numRuns: 500 },
+    );
+  });
+});
+
+describe("coalesceQueue property tests", () => {
+  // Few distinct ids, so most runs contain several entries for the same book.
+  const arbEntries: fc.Arbitrary<SyncQueueEntry[]> = fc
+    .array(
+      fc.record({
+        bookId: fc.constantFrom("a", "b", "c", "d"),
+        operation: fc.constantFrom<"upsert" | "delete">("upsert", "delete"),
+        position: fc.integer({ min: 0, max: 1000 }),
+      }),
+      { maxLength: 40 },
+    )
+    .map((items) =>
+      items.map((item, index) => ({
+        id: index + 1,
+        bookId: item.bookId,
+        operation: item.operation,
+        payload: { id: item.bookId, position: item.position },
+        createdAt: index,
+      })),
+    );
+
+  it("keeps exactly one group per book, holding that book's newest entry", () => {
+    fc.assert(
+      fc.property(arbEntries, (entries) => {
+        const groups = coalesceQueue(entries);
+        const bookIds = [...new Set(entries.map((e) => e.bookId))];
+
+        expect(groups.map((g) => g.bookId).sort()).toEqual(bookIds.sort());
+        for (const group of groups) {
+          const own = entries.filter((e) => e.bookId === group.bookId);
+          expect(group.latest).toBe(own[own.length - 1]);
+        }
+      }),
+      { numRuns: 500 },
+    );
+  });
+
+  it("accounts for every queue entry id exactly once", () => {
+    fc.assert(
+      fc.property(arbEntries, (entries) => {
+        const ids = coalesceQueue(entries).flatMap((g) => g.ids);
+
+        expect(ids.sort((x, y) => x - y)).toEqual(entries.map((e) => e.id));
+      }),
+      { numRuns: 500 },
+    );
+  });
+});
+
+describe("chunkBySize property tests", () => {
+  const arbSizes = fc.array(fc.integer({ min: 0, max: 50 }), { maxLength: 60 });
+  const arbMaxItems = fc.integer({ min: 1, max: 10 });
+  const arbMaxSize = fc.integer({ min: 1, max: 80 });
+  const size = (n: number) => n;
+
+  it("preserves every item, in order", () => {
+    fc.assert(
+      fc.property(arbSizes, arbMaxItems, arbMaxSize, (sizes, maxItems, maxSize) => {
+        expect(chunkBySize(sizes, maxItems, maxSize, size).flat()).toEqual(sizes);
+      }),
+      { numRuns: 500 },
+    );
+  });
+
+  it("never emits an empty batch nor one over the item cap", () => {
+    fc.assert(
+      fc.property(arbSizes, arbMaxItems, arbMaxSize, (sizes, maxItems, maxSize) => {
+        for (const chunk of chunkBySize(sizes, maxItems, maxSize, size)) {
+          expect(chunk.length).toBeGreaterThan(0);
+          expect(chunk.length).toBeLessThanOrEqual(maxItems);
+        }
+      }),
+      { numRuns: 500 },
+    );
+  });
+
+  it("keeps a batch under the size cap unless it is a single oversized item", () => {
+    fc.assert(
+      fc.property(arbSizes, arbMaxItems, arbMaxSize, (sizes, maxItems, maxSize) => {
+        for (const chunk of chunkBySize(sizes, maxItems, maxSize, size)) {
+          const total = chunk.reduce((sum, n) => sum + n, 0);
+          if (chunk.length > 1) expect(total).toBeLessThanOrEqual(maxSize);
+        }
       }),
       { numRuns: 500 },
     );
